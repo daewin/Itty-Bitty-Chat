@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1084963492940",
+    "firebase_url": "https://ibachat-f9176.firebaseio.com",
+    "project_id": "ibachat-f9176",
+    "storage_bucket": "ibachat-f9176.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084963492940:android:3e8180a2de318882",
+        "android_client_info": {
+          "package_name": "com.daewin.ibachat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084963492940-llds5tjboeav4j8oq4hs1i2birikonei.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.daewin.ibachat",
+            "certificate_hash": "78cda00fbd842b53bb419cc64bfd3adccd423175"
+          }
+        },
+        {
+          "client_id": "1084963492940-5cr9of0rvaoi8satmm8ir5llqv6ghqmv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByV3R2x09n7uI5oHogWhsGYvFQOR7NFis"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084963492940-5cr9of0rvaoi8satmm8ir5llqv6ghqmv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
