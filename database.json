@@ -1,0 +1,78 @@
+{
+	"users": {
+		"ada@gmail.com": {
+			"name": "Ada",
+
+			"friends": {
+				"eleanor@gmail.com": "Eleanor",
+				"charlie@gmail.com": "Charlie"
+				//...
+			},
+
+			"user_threads_with": {
+				"eleanor@gmail.com": {
+					"id": "U45acvm0yDtMT7u5JrBhVlgv2wWP",
+					"state": "active"
+					},
+				"charlie@gmail.com": {
+					"id": "XRhELMWwKF1vP7Ja4i2R0rXnrDI7",
+					"state": "muted"
+					},
+				//...
+			},
+
+			"friend_requests_received": {
+				"leanne@gmail.com": "2017-09-10T10:15:30"
+				//...
+			},
+
+			"friend_requests_sent": {
+				"bob@gmail.com": "2017-09-10T10:30:30"
+				//...
+			}
+		},
+		//...
+	},
+
+	"threads": {
+		"U45acvm0yDtMT7u5JrBhVlgv2wWP": {
+			"lastMessage": "...",
+			"timestamp": "2017-09-10T10:30:30",
+			"members": {
+				"ada@gmail.com": {
+					"is_typing": true
+				},
+				"eleanor@gmail.com": {
+					"is_typing": false
+				},
+			}
+		},
+	},
+
+	"thread_messages": {
+		"K45acvm0yDtMT7u5JrBhVlgv2wWS": {
+			"8yeVnISx6ohI9X1ZyKbAwBshEcFR": {
+				"user": "ada",
+				"message": "Hey!",
+				"timestamp": "2017-09-10T10:09:03"
+			},
+			"628LVOUaHjNn0MyaxF0RlfZJ72SX": {
+				"user": "eleanor",
+				"message": "Hi",
+				"timestamp": "2017-09-10T10:13:20"
+			},
+			"QlpTp95URyNk9FOmNDRwXnvbwtZB": {
+				"user": "ada",
+				"message": "How are you",
+				"timestamp": "2017-09-10T10:14:30"
+			},
+			"8yeVn5Ux6ohI9X1ZyKbAwBImEcFR": {
+				"user": "eleanor",
+				"message": "Fine :>)",
+				"timestamp": "2017-09-10T10:15:30"
+			}
+			//...
+		}
+		//...
+	}
+}
