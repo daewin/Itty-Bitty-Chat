@@ -11,8 +11,8 @@
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
     <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
+        completions."</string>
+    <string name="prompt_login">Click on the icon above to login</string>
 
     <!-- Strings related to federated authentication -->
     <string name="facebook_application_id" translatable="false">127922934577125</string>
@@ -27,6 +27,11 @@
     <string name="sign_in_cancelled">Sign in cancelled</string>
     <string name="no_internet_connection">No internet connection</string>
     <string name="unknown_error">An unknown error occurred</string>
+    <string name="firebase_error">Database error occurred, please re-login</string>
+
+    <!-- Toolbar related strings -->
+    <string name="action_add_friend">Add a friend</string>
+    <string name="action_settings">Settings</string>
 
 
 </resources>
