@@ -12,8 +12,8 @@ import java.util.Comparator;
 
 public class UserModel implements SortedListAdapter.ViewModel {
 
-    public String name;
-    public String email;
+    private String name;
+    private String email;
 
     public UserModel(){
         // Default constructor required for calls to DataSnapshot.getValue(UserModel.class)

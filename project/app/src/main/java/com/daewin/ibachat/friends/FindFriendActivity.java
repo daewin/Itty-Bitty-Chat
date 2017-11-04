@@ -6,10 +6,12 @@ import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.SearchView;
 
 import com.daewin.ibachat.R;
@@ -29,13 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Find a friend
+ * Find a friend via their email, and sorts the results lexicographically.
  */
 
 public class FindFriendActivity extends AppCompatActivity {
 
     private DatabaseReference mUserDatabase;
-    private FirebaseUser currentUser;
+    private FirebaseUser mCurrentUser;
     private FindFriendListAdapter mFindFriendListAdapter;
     private FindFriendActivityBinding binding;
 
@@ -48,10 +50,18 @@ public class FindFriendActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.find_friend_activity);
 
+        // Toolbar settings
+        setSupportActionBar(binding.searchToolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
+        }
+
         // Database initialization. We use the index list for better performance(no shallow queries)
         mUserDatabase = FirebaseDatabase.getInstance().getReference().child("users_index");
 
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         // Initialize views
         mSearchView = binding.friendSearchView;
@@ -63,7 +73,6 @@ public class FindFriendActivity extends AppCompatActivity {
         // Set up the SearchView
         initializeSearchView();
     }
-
 
     private void initializeRecyclerView() {
         // Use this setting to improve performance if you know that changes
@@ -82,7 +91,7 @@ public class FindFriendActivity extends AppCompatActivity {
 
     private void initializeSearchView() {
 
-        mSearchView.setQueryHint("Search friends");
+        mSearchView.setQueryHint("Find friends via email");
         mSearchView.setIconified(false);
 
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -104,6 +113,8 @@ public class FindFriendActivity extends AppCompatActivity {
                     return false;
                 }
 
+                binding.searchProgressBar.setVisibility(View.VISIBLE);
+
                 // Get the lexicographic range starting with newText
                 Query usernameQuery = mUserDatabase
                         .orderByKey()
@@ -118,20 +129,21 @@ public class FindFriendActivity extends AppCompatActivity {
 
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 
-                            String name = snapshot.getValue(String.class);
+                            String name = snapshot.child("name").getValue(String.class);
                             String email = snapshot.getKey();
                             String decodedEmail = User.getDecodedEmail(email);
 
                             UserModel userModel = new UserModel(name, decodedEmail);
 
-                            if(userModel.exists()){
-                                if (!userModel.email.equals(currentUser.getEmail())) {
+                            if (userModel.exists()) {
+                                if (!userModel.getEmail().equals(mCurrentUser.getEmail())) {
                                     userModels.add(userModel);
                                 }
                             }
                         }
 
                         updateAdapterList(userModels);
+                        binding.searchProgressBar.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
@@ -168,5 +180,25 @@ public class FindFriendActivity extends AppCompatActivity {
     @MainThread
     private void showSnackbar(@StringRes int errorMessageRes) {
         Snackbar.make(binding.getRoot(), errorMessageRes, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Clear adapter list to force cleanup any remaining listeners
+        clearAdapterList();
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onStop() {
+        // Clear adapter list to force cleanup any remaining listeners
+        clearAdapterList();
+        super.onStop();
     }
 }
