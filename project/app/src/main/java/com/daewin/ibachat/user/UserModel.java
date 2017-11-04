@@ -13,30 +13,37 @@ import java.util.Comparator;
 public class UserModel implements SortedListAdapter.ViewModel {
 
     public String name;
-    public String username;
     public String email;
 
     public UserModel(){
         // Default constructor required for calls to DataSnapshot.getValue(UserModel.class)
     }
 
-    public UserModel(String name, String username, String email) {
+    public UserModel(String name, String email) {
         this.name = name;
-        this.username = username;
         this.email = email;
     }
 
-    // This is used for purposes where email is unnecessary
-    public UserModel(String name, String username) {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
         this.name = name;
-        this.username = username;
-        this.email = "";
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public boolean exists(){
-        if(name != null && username != null && email != null){
+        if(name != null && email != null){
 
-            if(!name.isEmpty() && !username.isEmpty()){
+            if(!name.isEmpty() && !email.isEmpty()){
                 return true;
             }
         }
@@ -49,9 +56,7 @@ public class UserModel implements SortedListAdapter.ViewModel {
         if(item instanceof UserModel){
             final UserModel other = (UserModel) item;
 
-            if(other.name.equals(name)
-                    && other.username.equals(username)
-                    && other.email.equals(email)){
+            if(other.name.equals(name) && other.email.equals(email)){
                 return true;
             }
         }
@@ -68,7 +73,7 @@ public class UserModel implements SortedListAdapter.ViewModel {
     public static final Comparator<UserModel> alphabeticalComparator = new Comparator<UserModel>() {
         @Override
         public int compare(UserModel a, UserModel b) {
-            return a.username.compareTo(b.username);
+            return a.email.compareTo(b.email);
         }
     };
 }

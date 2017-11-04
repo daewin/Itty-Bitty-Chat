@@ -13,6 +13,7 @@ import android.view.MenuItem;
 
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
+import com.daewin.ibachat.friends.FindFriendActivity;
 import com.firebase.ui.auth.IdpResponse;
 
 /**
@@ -55,6 +56,8 @@ public class ChatLandingActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_add_friend:
+
+                startActivity(new Intent(this, FindFriendActivity.class));
                 return true;
 
             case R.id.action_settings:

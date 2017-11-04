@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1084963492940-d6p7s2goncracet0fo1m4717r8si5p4r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.daewin.ibachat",
+            "certificate_hash": "dfdba3ce6c5cb72e58f2543050751eeaeebd73ab"
+          }
+        },
+        {
           "client_id": "1084963492940-llds5tjboeav4j8oq4hs1i2birikonei.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -34,7 +34,7 @@ public class User {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
 
-                            if (!dataSnapshot.exists()) {
+                            if (dataSnapshot.exists()) {
                                 initializeUserDatabaseInformation(name, encodedEmail);
                             }
 
@@ -54,14 +54,19 @@ public class User {
     private static void initializeUserDatabaseInformation(String name, String encodedEmail) {
 
         mDatabase.child("users").child(encodedEmail).child("name").setValue(name);
+        mDatabase.child("users_index").child(encodedEmail).child("name").setValue(name);
     }
 
     // Firebase Database doesn't allow period characters in the key, so we need to replace
     // it with a comma.
-    private static String getEncodedEmail(String email) {
+    public static String getEncodedEmail(String email) {
 
         return email.replace('.', ',');
     }
 
+    public static String getDecodedEmail(String email) {
+
+        return email.replace(',', '.');
+    }
 
 }

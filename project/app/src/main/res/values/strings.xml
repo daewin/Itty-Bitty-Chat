@@ -15,9 +15,9 @@
     <string name="prompt_login">Click on the icon above to login</string>
 
     <!-- Strings related to federated authentication -->
-    <string name="facebook_application_id" translatable="false">127922934577125</string>
+    <string name="facebook_application_id" translatable="false">175493413028901</string>
     <!-- Facebook Application ID, prefixed by 'fb'.  Enables Chrome Custom tabs. -->
-    <string name="facebook_login_protocol_scheme" translatable="false">fb127922934577125</string>
+    <string name="facebook_login_protocol_scheme" translatable="false">fb175493413028901</string>
     <string name="twitter_consumer_key" translatable="false">M90CYbcm4as5wIvPj3VVzOUcZ</string>
     <string name="twitter_consumer_secret" translatable="false">tlZrR3SFsscS7kIq8txKH3e8eO8G8zdMszLfame1QOtqOL7CtJ</string>
 
@@ -28,6 +28,7 @@
     <string name="no_internet_connection">No internet connection</string>
     <string name="unknown_error">An unknown error occurred</string>
     <string name="firebase_error">Database error occurred, please re-login</string>
+    <string name="firebase_database_error">Database error occurred</string>
 
     <!-- Toolbar related strings -->
     <string name="action_add_friend">Add a friend</string>
