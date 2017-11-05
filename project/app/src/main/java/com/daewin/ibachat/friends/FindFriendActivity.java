@@ -74,6 +74,13 @@ public class FindFriendActivity extends AppCompatActivity {
         initializeSearchView();
     }
 
+    @Override
+    protected void onStop() {
+        // Clear adapter list to force cleanup any remaining listeners
+        clearAdapterList();
+        super.onStop();
+    }
+
     private void initializeRecyclerView() {
         // Use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -193,12 +200,5 @@ public class FindFriendActivity extends AppCompatActivity {
         // Clear adapter list to force cleanup any remaining listeners
         clearAdapterList();
         super.onBackPressed();
-    }
-
-    @Override
-    protected void onStop() {
-        // Clear adapter list to force cleanup any remaining listeners
-        clearAdapterList();
-        super.onStop();
     }
 }

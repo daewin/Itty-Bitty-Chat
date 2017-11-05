@@ -173,4 +173,9 @@ public class MainActivity extends AppCompatActivity {
         Snackbar.make(binding.getRoot(), errorMessageRes, Snackbar.LENGTH_LONG).show();
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
 }

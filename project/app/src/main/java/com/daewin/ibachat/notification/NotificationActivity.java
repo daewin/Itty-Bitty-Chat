@@ -7,6 +7,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.NotificationActivityBinding;
@@ -15,10 +16,15 @@ import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.user.UserModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Notifications for the user. Currently only shows friend requests, sorted according to the time of
@@ -28,11 +34,10 @@ import java.util.Comparator;
 public class NotificationActivity extends AppCompatActivity {
 
     private NotificationActivityBinding binding;
-    private DatabaseReference mUserDatabase;
     private DatabaseReference mRequestsReceivedReference;
-    private String mCurrentUsersEncodedEmail;
     private RecyclerView mRecyclerView;
     private NotificationListAdapter mNotificationListAdapter;
+    private ValueEventListener mNotificationsListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,16 +53,25 @@ public class NotificationActivity extends AppCompatActivity {
         }
 
         initializeDatabaseReferences();
-
-        mRecyclerView = binding.notificationRecyclerView;
-
         initializeRecyclerView();
-
-
     }
 
-    private void initializeDatabaseReferences(){
-        mUserDatabase = FirebaseDatabase.getInstance().getReference().child("users");
+    @Override
+    protected void onStart() {
+        super.onStart();
+        initializeDetailedNotifications();
+    }
+
+    @Override
+    protected void onStop() {
+        if(mNotificationsListener != null){
+            mRequestsReceivedReference.removeEventListener(mNotificationsListener);
+        }
+        super.onStop();
+    }
+
+    private void initializeDatabaseReferences() {
+        DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users");
         FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentFirebaseUser != null) {
@@ -65,17 +79,18 @@ public class NotificationActivity extends AppCompatActivity {
                     currentFirebaseUser.getEmail());
 
             if (currentUser.exists()) {
-                mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
+                String currentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
 
-                mRequestsReceivedReference = mUserDatabase.child(mCurrentUsersEncodedEmail)
+                mRequestsReceivedReference = userDatabase
+                        .child(currentUsersEncodedEmail)
                         .child("friend_requests_received");
             }
         }
     }
 
     private void initializeRecyclerView() {
-        // Use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
+        mRecyclerView = binding.notificationRecyclerView;
+
         mRecyclerView.setHasFixedSize(true);
 
         // Use a linear layout manager
@@ -86,6 +101,50 @@ public class NotificationActivity extends AppCompatActivity {
                 (this, UserRequestModel.class, UserRequestModel.timeComparator);
 
         mRecyclerView.setAdapter(mNotificationListAdapter);
+    }
+
+    private void initializeDetailedNotifications() {
+        mNotificationsListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                List<UserRequestModel> userRequestModels = new ArrayList<>();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+
+                    String decodedEmail = User.getDecodedEmail(snapshot.getKey());
+                    String name = snapshot.child("name").getValue(String.class);
+                    Long timestamp = snapshot.child("timestamp").getValue(Long.class);
+
+                    if (timestamp != null){
+                        UserRequestModel userRequestModel
+                                = new UserRequestModel(name, decodedEmail, timestamp);
+
+                        if(userRequestModel.exists()){
+                            userRequestModels.add(userRequestModel);
+                        }
+                    }
+                }
+
+                updateAdapterList(userRequestModels);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.w("Error", databaseError.toException().getMessage());
+            }
+        };
+
+        mRequestsReceivedReference.addValueEventListener(mNotificationsListener);
+    }
+
+    private void updateAdapterList(List<UserRequestModel> userRequestModels) {
+
+        mNotificationListAdapter.edit()
+                .replaceAll(userRequestModels)
+                .commit();
+
+        mRecyclerView.scrollToPosition(0);
     }
 
     @Override

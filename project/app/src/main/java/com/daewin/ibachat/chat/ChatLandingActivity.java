@@ -3,9 +3,11 @@ package com.daewin.ibachat.chat;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -14,6 +16,8 @@ import android.view.MenuItem;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
 import com.daewin.ibachat.friends.FindFriendActivity;
+import com.daewin.ibachat.notification.NotificationActivity;
+import com.daewin.ibachat.settings.SettingsActivity;
 import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.user.UserModel;
 import com.firebase.ui.auth.IdpResponse;
@@ -41,9 +45,8 @@ public class ChatLandingActivity extends AppCompatActivity {
     private DatabaseReference mDatabase;
     private DatabaseReference mRequestsReceivedReference;
     private String mCurrentUsersEncodedEmail;
-    private AtomicInteger mNotificationCounter;
     private Menu mToolbarMenu;
-    private ChildEventListener mNotificationsListener;
+    private ValueEventListener mNotificationsListener;
 
     @NonNull
     public static Intent createIntent(Context context, IdpResponse idpResponse) {
@@ -63,20 +66,21 @@ public class ChatLandingActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.chat_landing_activity);
         setSupportActionBar(binding.myToolbar);
 
-        // Default value is 0
-        mNotificationCounter = new AtomicInteger();
-
         initializeDatabaseReferences();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         initializeNotifications();
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
         if(mNotificationsListener != null){
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
-
-        super.onDestroy();
+        super.onStop();
     }
 
     private void initializeDatabaseReferences(){
@@ -99,19 +103,16 @@ public class ChatLandingActivity extends AppCompatActivity {
     }
 
     private void initializeNotifications(){
-
         mNotificationsListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    // First notification, so change the icon to an active notification icon
-                    getNotificationMenuItem()
-                            .setIcon(R.drawable.ic_notifications_active_white_24dp);
+                if (dataSnapshot.exists()) {
+                    // Change the icon to an active notification icon
+                    setNotificationIcon(R.drawable.ic_notifications_active_white_24dp);
+                } else {
+                    // No notifications left, so change the icon to an "empty" notification icon
+                    setNotificationIcon(R.drawable.ic_notifications_none_white_24dp);
                 }
-            } else {
-                // No notifications left, so change the icon to an "empty" notification icon
-                getNotificationMenuItem()
-                        .setIcon(R.drawable.ic_notifications_none_white_24dp);
             }
 
             @Override
@@ -125,6 +126,15 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     private MenuItem getNotificationMenuItem(){
         return mToolbarMenu.findItem(R.id.action_notifications);
+    }
+
+    private void setNotificationIcon(int drawable){
+        // Check if the current notification icon has already been set, else set it.
+        if(!(getNotificationMenuItem().getIcon()
+                .equals(ContextCompat.getDrawable(getApplicationContext(), drawable)))){
+
+            getNotificationMenuItem().setIcon(drawable);
+        }
     }
 
     @Override
@@ -142,7 +152,14 @@ public class ChatLandingActivity extends AppCompatActivity {
                 startActivity(new Intent(this, FindFriendActivity.class));
                 return true;
 
+            case R.id.action_notifications:
+
+                startActivity(new Intent(this, NotificationActivity.class));
+                return true;
+
             case R.id.action_settings:
+
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
 
             default:
