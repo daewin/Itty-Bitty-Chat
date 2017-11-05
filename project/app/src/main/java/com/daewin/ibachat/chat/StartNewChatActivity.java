@@ -12,7 +12,6 @@ import android.widget.SearchView;
 
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.StartNewChatActivityBinding;
-import com.daewin.ibachat.friends.FindFriendListAdapter;
 import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.user.UserModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -70,7 +69,7 @@ public class StartNewChatActivity extends AppCompatActivity {
         mRecyclerView.setAdapter(mStartNewChatListAdapter);
     }
 
-    private void initializeFriendsList(){
+    private void initializeFriendsList() {
         DatabaseReference userDatabase
                 = FirebaseDatabase.getInstance().getReference().child("users");
 
@@ -123,10 +122,6 @@ public class StartNewChatActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String s) {
                 // Do nothing
-                if (s.isEmpty()) {
-                    clearAdapterList();
-                }
-
                 return false;
             }
 
@@ -140,18 +135,18 @@ public class StartNewChatActivity extends AppCompatActivity {
 
                 ArrayList<UserModel> filteredUserModels = new ArrayList<>();
 
-                for(UserModel userModel : userModels){
+                for (UserModel userModel : userModels) {
 
                     String name = userModel.getName().toLowerCase();
                     String email = userModel.getEmail().toLowerCase();
                     String query = s.toLowerCase();
 
-                    if(email.contains(query) || name.contains(query)){
+                    if (email.contains(query) || name.contains(query)) {
                         filteredUserModels.add(userModel);
                     }
                 }
 
-                if(filteredUserModels.size() > 0){
+                if (filteredUserModels.size() > 0) {
                     updateAdapterList(filteredUserModels);
                 } else {
                     clearAdapterList();
@@ -178,5 +173,11 @@ public class StartNewChatActivity extends AppCompatActivity {
                 .commit();
 
         mRecyclerView.scrollToPosition(0);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 }

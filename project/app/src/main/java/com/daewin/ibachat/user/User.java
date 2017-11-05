@@ -34,7 +34,7 @@ public class User {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
 
-                            if (dataSnapshot.exists()) {
+                            if (!dataSnapshot.exists()) {
                                 initializeUserDatabaseInformation(name, encodedEmail);
                             }
 

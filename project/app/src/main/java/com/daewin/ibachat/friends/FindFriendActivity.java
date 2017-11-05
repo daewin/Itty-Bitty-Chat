@@ -105,10 +105,7 @@ public class FindFriendActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-
-                if (query.isEmpty()) {
-                    clearAdapterList();
-                }
+                // Do nothing
                 return false;
             }
 
