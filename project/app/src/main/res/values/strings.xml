@@ -35,5 +35,9 @@
     <string name="action_add_friend">Add a friend</string>
     <string name="action_settings">Settings</string>
 
+    <!-- Strings related to notifications -->
+    <string name="accept_request">Accept</string>
+    <string name="decline_request">Decline</string>
+
 
 </resources>

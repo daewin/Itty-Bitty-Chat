@@ -22,12 +22,15 @@
 			},
 
 			"friend_requests_received": {
-				"leanne@gmail,com": "2017-09-10T10:15:30"
+				"leanne@gmail,com": {
+					"name": "Leanne",
+					"timestamp": "1509843023726"
+				},
 				//...
 			},
 
 			"friend_requests_sent": {
-				"bob@gmail,com": "2017-09-10T10:30:30"
+				"bob@gmail,com": true
 				//...
 			}
 		},

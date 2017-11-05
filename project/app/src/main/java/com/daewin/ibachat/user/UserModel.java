@@ -3,6 +3,7 @@ package com.daewin.ibachat.user;
 import android.support.annotation.NonNull;
 
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
+import com.google.firebase.database.Exclude;
 
 import java.util.Comparator;
 
@@ -40,6 +41,7 @@ public class UserModel implements SortedListAdapter.ViewModel {
         this.email = email;
     }
 
+    @Exclude
     public boolean exists(){
         if(name != null && email != null){
 
@@ -50,6 +52,7 @@ public class UserModel implements SortedListAdapter.ViewModel {
         return false;
     }
 
+    @Exclude
     @Override
     public <T> boolean isSameModelAs(@NonNull T item) {
 
@@ -64,12 +67,14 @@ public class UserModel implements SortedListAdapter.ViewModel {
         return false;
     }
 
+    @Exclude
     @Override
     public <T> boolean isContentTheSameAs(@NonNull T item) {
         return isSameModelAs(item);
     }
 
     // Comparator for the Sorted List in the Adapter
+    @Exclude
     public static final Comparator<UserModel> alphabeticalComparator = new Comparator<UserModel>() {
         @Override
         public int compare(UserModel a, UserModel b) {

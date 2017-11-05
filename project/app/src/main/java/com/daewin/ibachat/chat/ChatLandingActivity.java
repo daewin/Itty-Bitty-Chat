@@ -24,6 +24,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,8 +41,9 @@ public class ChatLandingActivity extends AppCompatActivity {
     private DatabaseReference mDatabase;
     private DatabaseReference mRequestsReceivedReference;
     private String mCurrentUsersEncodedEmail;
-    private AtomicInteger notificationCounter;
+    private AtomicInteger mNotificationCounter;
     private Menu mToolbarMenu;
+    private ChildEventListener mNotificationsListener;
 
     @NonNull
     public static Intent createIntent(Context context, IdpResponse idpResponse) {
@@ -62,11 +64,19 @@ public class ChatLandingActivity extends AppCompatActivity {
         setSupportActionBar(binding.myToolbar);
 
         // Default value is 0
-        notificationCounter = new AtomicInteger();
+        mNotificationCounter = new AtomicInteger();
 
         initializeDatabaseReferences();
         initializeNotifications();
+    }
 
+    @Override
+    protected void onDestroy() {
+        if(mNotificationsListener != null){
+            mRequestsReceivedReference.removeEventListener(mNotificationsListener);
+        }
+
+        super.onDestroy();
     }
 
     private void initializeDatabaseReferences(){
@@ -88,37 +98,29 @@ public class ChatLandingActivity extends AppCompatActivity {
         }
     }
 
-    // TODO: Clean up listener
     private void initializeNotifications(){
-        mRequestsReceivedReference.addChildEventListener(new ChildEventListener() {
+
+        mNotificationsListener = new ValueEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(notificationCounter.addAndGet(COUNTER_DELTA) == 1){
-                    // First notification, so change the icon to an active notification
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    // First notification, so change the icon to an active notification icon
                     getNotificationMenuItem()
                             .setIcon(R.drawable.ic_notifications_active_white_24dp);
                 }
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
+            } else {
+                // No notifications left, so change the icon to an "empty" notification icon
+                getNotificationMenuItem()
+                        .setIcon(R.drawable.ic_notifications_none_white_24dp);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.w("Error", databaseError.toException().getMessage());
             }
-        });
+        };
+        
+        mRequestsReceivedReference.addValueEventListener(mNotificationsListener);
     }
 
     private MenuItem getNotificationMenuItem(){

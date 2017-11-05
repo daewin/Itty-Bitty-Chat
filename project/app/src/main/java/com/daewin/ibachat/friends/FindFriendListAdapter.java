@@ -18,9 +18,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Recycler View Adapter for displaying a list of people to add. Currently displays all the
@@ -37,6 +40,7 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
     private DatabaseReference mRequestsReference;
     private DatabaseReference mDatabase;
     private String mCurrentUsersEncodedEmail;
+    private String mCurrentUsersName;
 
     FindFriendListAdapter(@NonNull Context context,
                           @NonNull Class<UserModel> aClass,
@@ -55,6 +59,7 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
 
             if (currentUser.exists()) {
                 mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
+                mCurrentUsersName = currentUser.getName();
 
                 mFriendsReference = mDatabase.child("users")
                         .child(mCurrentUsersEncodedEmail)
@@ -135,6 +140,7 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
 
             mFriendsReference.child(encodedFriendsEmail).addValueEventListener(friendsEventListener);
 
+
             binding.sendRequestButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -194,12 +200,16 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
                     .child(encodedFriendsEmail)
                     .setValue(true);
 
-            // Add an entry to the friend's friend-requests-received list in the database
+            // Add a detailed entry to the friend's friend-requests-received list in the database
+            Map<String, Object> value = new HashMap<>();
+            value.put("name", mCurrentUsersName);
+            value.put("timestamp", ServerValue.TIMESTAMP);
+
             mDatabase.child("users")
                     .child(encodedFriendsEmail)
                     .child("friend_requests_received")
                     .child(mCurrentUsersEncodedEmail)
-                    .setValue(true);
+                    .setValue(value);
         }
 
 
