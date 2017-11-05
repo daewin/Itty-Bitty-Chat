@@ -9,11 +9,14 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/searchToolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:background="?attr/colorAccent"
         android:elevation="4dp"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <ProgressBar

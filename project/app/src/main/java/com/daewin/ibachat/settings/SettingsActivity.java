@@ -48,7 +48,7 @@ public class SettingsActivity extends AppCompatActivity {
                                 // The user is now signed out
                                 startActivity(new Intent(SettingsActivity.this,
                                                                             MainActivity.class));
-                                finish();
+                                finishAffinity();
                             }
                         });
             }

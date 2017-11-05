@@ -172,10 +172,4 @@ public class MainActivity extends AppCompatActivity {
     private void showSnackbar(@StringRes int errorMessageRes) {
         Snackbar.make(binding.getRoot(), errorMessageRes, Snackbar.LENGTH_LONG).show();
     }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

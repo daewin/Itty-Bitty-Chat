@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.NotificationActivityBinding;
@@ -126,7 +127,13 @@ public class NotificationActivity extends AppCompatActivity {
                     }
                 }
 
-                updateAdapterList(userRequestModels);
+                if(userRequestModels.isEmpty()){
+                    updateAdapterList(userRequestModels);
+                    binding.noNotificationsTextView.setVisibility(View.VISIBLE);
+                } else {
+                    binding.noNotificationsTextView.setVisibility(View.INVISIBLE);
+                    updateAdapterList(userRequestModels);
+                }
             }
 
             @Override

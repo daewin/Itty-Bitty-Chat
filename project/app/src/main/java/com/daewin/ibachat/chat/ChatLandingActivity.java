@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
@@ -67,6 +68,13 @@ public class ChatLandingActivity extends AppCompatActivity {
         setSupportActionBar(binding.myToolbar);
 
         initializeDatabaseReferences();
+
+        binding.mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getApplicationContext(), StartNewChatActivity.class));
+            }
+        });
     }
 
     @Override

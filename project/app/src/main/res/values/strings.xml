@@ -38,6 +38,7 @@
     <!-- Strings related to notifications -->
     <string name="accept_request">Accept</string>
     <string name="decline_request">Decline</string>
+    <string name="no_notifications">You have no notifications at the moment!</string>
 
 
 </resources>
