@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.daewin.ibachat.MainActivity;
+import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.SettingsActivityBinding;
 import com.firebase.ui.auth.AuthUI;
@@ -25,6 +26,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getLifecycle().addObserver(new MyLifecycleObserver());
 
         SettingsActivityBinding binding
                 = DataBindingUtil.setContentView(this, R.layout.settings_activity);

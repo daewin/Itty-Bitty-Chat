@@ -1,17 +1,15 @@
 package com.daewin.ibachat.notification;
 
 import android.content.Context;
-import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.daewin.ibachat.databinding.NotificationListItemBinding;
+import com.daewin.ibachat.model.UserRequestModel;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.user.UserModel;
+import com.daewin.ibachat.model.UserModel;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;

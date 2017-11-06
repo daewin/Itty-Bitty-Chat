@@ -3,7 +3,6 @@ package com.daewin.ibachat.chat;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -14,24 +13,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
 import com.daewin.ibachat.friends.FindFriendActivity;
 import com.daewin.ibachat.notification.NotificationActivity;
 import com.daewin.ibachat.settings.SettingsActivity;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.user.UserModel;
+import com.daewin.ibachat.model.UserModel;
+import com.daewin.ibachat.user.UserPresence;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Chat Landing which displays the user's current chats. This would be the main activity after login.
@@ -40,12 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ChatLandingActivity extends AppCompatActivity {
 
     private static final String EXTRA_IDP_RESPONSE = "extra_idp_response";
-    private static final int COUNTER_DELTA = 1;
 
-    private ChatLandingActivityBinding binding;
-    private DatabaseReference mDatabase;
     private DatabaseReference mRequestsReceivedReference;
-    private String mCurrentUsersEncodedEmail;
     private Menu mToolbarMenu;
     private ValueEventListener mNotificationsListener;
 
@@ -60,11 +54,14 @@ public class ChatLandingActivity extends AppCompatActivity {
         return startIntent.setClass(context, ChatLandingActivity.class);
     }
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.chat_landing_activity);
+        getLifecycle().addObserver(new MyLifecycleObserver());
+
+        ChatLandingActivityBinding binding
+                = DataBindingUtil.setContentView(this, R.layout.chat_landing_activity);
+
         setSupportActionBar(binding.myToolbar);
 
         initializeDatabaseReferences();
@@ -85,14 +82,15 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if(mNotificationsListener != null){
+        if (mNotificationsListener != null) {
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
+
         super.onStop();
     }
 
-    private void initializeDatabaseReferences(){
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+    private void initializeDatabaseReferences() {
+        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
         FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentFirebaseUser != null) {
@@ -100,7 +98,7 @@ public class ChatLandingActivity extends AppCompatActivity {
                     currentFirebaseUser.getEmail());
 
             if (currentUser.exists()) {
-                mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
+                String mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
 
                 // Set a listener for notifications (currently it's just friend requests)
                 mRequestsReceivedReference = mDatabase.child("users")
@@ -110,7 +108,7 @@ public class ChatLandingActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeNotifications(){
+    private void initializeNotifications() {
         mNotificationsListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -128,18 +126,18 @@ public class ChatLandingActivity extends AppCompatActivity {
                 Log.w("Error", databaseError.toException().getMessage());
             }
         };
-        
+
         mRequestsReceivedReference.addValueEventListener(mNotificationsListener);
     }
 
-    private MenuItem getNotificationMenuItem(){
+    private MenuItem getNotificationMenuItem() {
         return mToolbarMenu.findItem(R.id.action_notifications);
     }
 
-    private void setNotificationIcon(int drawable){
+    private void setNotificationIcon(int drawable) {
         // Check if the current notification icon has already been set, else set it.
-        if(!(getNotificationMenuItem().getIcon()
-                .equals(ContextCompat.getDrawable(getApplicationContext(), drawable)))){
+        if (!(getNotificationMenuItem().getIcon()
+                .equals(ContextCompat.getDrawable(getApplicationContext(), drawable)))) {
 
             getNotificationMenuItem().setIcon(drawable);
         }
@@ -154,7 +152,7 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.action_add_friend:
 
                 startActivity(new Intent(this, FindFriendActivity.class));

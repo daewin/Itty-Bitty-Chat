@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getLifecycle().addObserver(new MyLifecycleObserver());
+
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
         progressBar = binding.loginProgressBar;
@@ -109,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
 
         editor.remove(PREFERENCES_NAME);
         editor.apply();
-        
+
         if (requestCode == RC_SIGN_IN) {
             handleSignInResponse(resultCode, data);
             return;

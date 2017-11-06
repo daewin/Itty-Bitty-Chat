@@ -1,7 +1,6 @@
-package com.daewin.ibachat.notification;
+package com.daewin.ibachat.model;
 
 import android.support.annotation.NonNull;
-import com.daewin.ibachat.user.UserModel;
 
 import java.util.Comparator;
 
@@ -11,9 +10,9 @@ import java.util.Comparator;
 
 public class UserRequestModel extends UserModel {
 
-    private long timestamp;
+    private Long timestamp;
 
-    UserRequestModel(String name, String email, long timestamp) {
+    public UserRequestModel(String name, String email, Long timestamp) {
         super(name, email);
         this.timestamp = timestamp;
     }
@@ -26,7 +25,7 @@ public class UserRequestModel extends UserModel {
 
             if(other.getName().equals(getName())
                     && other.getEmail().equals(getEmail())
-                    && (Long.compare(other.timestamp, timestamp) == 0)){
+                    && (other.getTimestamp().compareTo(getTimestamp()) == 0)){
                 return true;
             }
         }
@@ -40,7 +39,7 @@ public class UserRequestModel extends UserModel {
     }
 
     // Comparator for the Sorted List in the Adapter
-    static final Comparator<UserRequestModel> timeComparator = new Comparator<UserRequestModel>() {
+    public static final Comparator<UserRequestModel> timeComparator = new Comparator<UserRequestModel>() {
         @Override
         public int compare(UserRequestModel a, UserRequestModel b) {
 
@@ -50,4 +49,8 @@ public class UserRequestModel extends UserModel {
             return timeB.compareTo(timeA);
         }
     };
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
 }

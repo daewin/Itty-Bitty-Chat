@@ -1,4 +1,4 @@
-package com.daewin.ibachat.user;
+package com.daewin.ibachat.model;
 
 import android.support.annotation.NonNull;
 

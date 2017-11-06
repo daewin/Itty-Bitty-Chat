@@ -10,11 +10,12 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 
+import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.NotificationActivityBinding;
-import com.daewin.ibachat.friends.FindFriendListAdapter;
+import com.daewin.ibachat.model.UserRequestModel;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.user.UserModel;
+import com.daewin.ibachat.model.UserModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -24,7 +25,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -43,6 +43,8 @@ public class NotificationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getLifecycle().addObserver(new MyLifecycleObserver());
+
         binding = DataBindingUtil.setContentView(this, R.layout.notification_activity);
 
         // Toolbar settings

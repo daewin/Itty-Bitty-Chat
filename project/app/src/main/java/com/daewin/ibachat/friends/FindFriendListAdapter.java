@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 
 import com.daewin.ibachat.databinding.FindFriendListItemBinding;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.user.UserModel;
+import com.daewin.ibachat.model.UserModel;
 import com.github.wrdlbrnft.modularadapter.ModularAdapter;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.auth.FirebaseAuth;

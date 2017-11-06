@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth:11.4.2'
     implementation 'com.google.firebase:firebase-database:11.4.2'
     implementation 'com.github.wrdlbrnft:sorted-list-adapter:0.2.0.19'
+    implementation 'android.arch.lifecycle:common-java8:1.0.0-rc1'
     implementation 'com.firebaseui:firebase-ui-auth:3.1.0'
     implementation 'com.facebook.android:facebook-login:4.27.0'
     implementation('com.twitter.sdk.android:twitter:3.1.1@aar') {

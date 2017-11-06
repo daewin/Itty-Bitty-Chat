@@ -10,10 +10,11 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.SearchView;
 
+import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.StartNewChatActivityBinding;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.user.UserModel;
+import com.daewin.ibachat.model.UserModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -39,6 +40,8 @@ public class StartNewChatActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getLifecycle().addObserver(new MyLifecycleObserver());
+
         binding = DataBindingUtil.setContentView(this, R.layout.start_new_chat_activity);
 
         // Toolbar settings
@@ -105,6 +108,9 @@ public class StartNewChatActivity extends AppCompatActivity {
                         userModels.add(userModel);
                     }
                 }
+
+                // Display all initially
+                updateAdapterList(userModels);
             }
 
             @Override
@@ -129,7 +135,7 @@ public class StartNewChatActivity extends AppCompatActivity {
             public boolean onQueryTextChange(String s) {
 
                 if (s.isEmpty()) {
-                    clearAdapterList();
+                    updateAdapterList(userModels);
                     return false;
                 }
 

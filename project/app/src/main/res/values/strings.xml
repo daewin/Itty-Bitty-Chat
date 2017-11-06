@@ -19,7 +19,8 @@
     <!-- Facebook Application ID, prefixed by 'fb'.  Enables Chrome Custom tabs. -->
     <string name="facebook_login_protocol_scheme" translatable="false">fb175493413028901</string>
     <string name="twitter_consumer_key" translatable="false">M90CYbcm4as5wIvPj3VVzOUcZ</string>
-    <string name="twitter_consumer_secret" translatable="false">tlZrR3SFsscS7kIq8txKH3e8eO8G8zdMszLfame1QOtqOL7CtJ</string>
+    <string name="twitter_consumer_secret" translatable="false">
+        tlZrR3SFsscS7kIq8txKH3e8eO8G8zdMszLfame1QOtqOL7CtJ</string>
 
     <!-- Auth UI -->
     <string name="unknown_response">Unexpected onActivityResult response code</string>
@@ -40,5 +41,8 @@
     <string name="decline_request">Decline</string>
     <string name="no_notifications">You have no notifications at the moment!</string>
 
-
+    <!-- String related to chats -->
+    <string name="write_message"> Write a message&#8230;</string>
+    <string name="is_typing">typing&#8230;</string>
+    <string name="user_online">Online</string>
 </resources>
