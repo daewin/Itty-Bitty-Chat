@@ -73,6 +73,18 @@ public class UserPresence {
         return null;
     }
 
+    public static void removeUserPresence(){
+        String encodedEmail = getCurrentUsersEncodedEmail();
+
+        if(encodedEmail != null) {
+
+            DatabaseReference userConnectionsReference
+                    = database.child("users").child(encodedEmail).child("connections");
+
+            userConnectionsReference.removeValue();
+        }
+    }
+
     private static String getCurrentUsersEncodedEmail() {
         FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 

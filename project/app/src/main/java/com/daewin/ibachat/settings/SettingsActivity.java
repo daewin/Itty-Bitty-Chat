@@ -13,9 +13,11 @@ import com.daewin.ibachat.MainActivity;
 import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.SettingsActivityBinding;
+import com.daewin.ibachat.user.UserPresence;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Settings page
@@ -42,6 +44,8 @@ public class SettingsActivity extends AppCompatActivity {
         binding.logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                UserPresence.removeUserPresence();
+
                 AuthUI.getInstance()
                         .signOut(SettingsActivity.this)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {

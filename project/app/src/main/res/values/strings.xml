@@ -42,7 +42,8 @@
     <string name="no_notifications">You have no notifications at the moment!</string>
 
     <!-- String related to chats -->
-    <string name="write_message"> Write a message&#8230;</string>
-    <string name="is_typing">typing&#8230;</string>
+    <string name="write_message">Write a message&#8230;</string>
+    <string name="is_typing">Typing&#8230;</string>
     <string name="user_online">Online</string>
+    <string name="user_inactive">Inactive</string>
 </resources>

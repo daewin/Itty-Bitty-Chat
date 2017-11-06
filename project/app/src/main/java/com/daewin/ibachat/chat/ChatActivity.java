@@ -1,6 +1,5 @@
 package com.daewin.ibachat.chat;
 
-import android.app.Application;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -8,6 +7,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -35,24 +35,22 @@ public class ChatActivity extends AppCompatActivity {
     public static final String ARG_EMAIL_OF_FRIEND = "EMAIL_OF_FRIEND";
     public static final String ARG_CURRENT_THREAD_ID = "CURRENT_THREAD_ID";
 
+    // Database references
+    private DatabaseReference statusOfFriendReference;
+    private DatabaseReference typingStateOfFriendReference;
+    private DatabaseReference lastSeenOfFriendReference;
+    private DatabaseReference typingStateOfUserReference;
+
+    // Listeners
+    private ValueEventListener statusOfFriendListener;
+    private ValueEventListener typingStateOfFriendListener;
+
     private ChatActivityBinding binding;
+    private TextView statusTextView;
+    private boolean friendsStatusSet;
     private String nameOfFriend;
     private String emailOfFriend;
     private String threadID;
-    private DatabaseReference typingStateOfFriendReference;
-    private ValueEventListener typingStateOfFriendListener;
-    private DatabaseReference typingStateOfUserReference;
-    private String mCurrentUsersEncodedEmail;
-    private String mCurrentUsersName;
-    private DatabaseReference statusOfFriendReference;
-    private ValueEventListener statusOfFriendListener;
-    private DatabaseReference lastSeenOfFriendReference;
-    private ValueEventListener lastSeenOfFriendListener;
-
-    private boolean isFriendOnline = false;
-    private boolean isFriendTyping = false;
-
-    private TextView statusTextView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,33 +72,28 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        initializeStatusListenerForFriend();
+
+        friendsStatusSet = false;
+    }
+
+    @Override
     protected void onPause() {
         setTypingState(false);
         super.onPause();
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        initializeStatusListenerForFriend();
-        initializeTypingListenerForFriend();
-    }
-
-    @Override
     protected void onStop() {
-        if (typingStateOfFriendListener != null) {
-            typingStateOfFriendReference.removeEventListener(typingStateOfFriendListener);
-            typingStateOfFriendListener = null;
-        }
 
         if (statusOfFriendListener != null) {
             statusOfFriendReference.removeEventListener(statusOfFriendListener);
-            statusOfFriendListener = null;
         }
 
-        if(lastSeenOfFriendListener != null){
-            lastSeenOfFriendReference.removeEventListener(lastSeenOfFriendListener);
-            lastSeenOfFriendListener = null;
+        if (typingStateOfFriendListener != null) {
+            typingStateOfFriendReference.removeEventListener(typingStateOfFriendListener);
         }
 
         super.onStop();
@@ -142,8 +135,7 @@ public class ChatActivity extends AppCompatActivity {
                     currentFirebaseUser.getEmail());
 
             if (currentUser.exists()) {
-                mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
-                mCurrentUsersName = currentUser.getName();
+                String mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
 
                 typingStateOfUserReference
                         = currentThreadReference.child("members")
@@ -180,18 +172,32 @@ public class ChatActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 if (dataSnapshot.exists()) {
-                    isFriendOnline = true;
-                    coordinateStatusUpdates("Online");
+                    if(!friendsStatusSet){
+                        // Since a user can have multiple devices, we only set it to online for
+                        // the first "online" status update. This is to prevent multiple listeners
+                        // set for the typing activity.
+                        statusTextView.setText(R.string.user_online);
 
+                        // Initialize listener for their typing activity
+                        initializeTypingListenerForFriend();
+
+                        friendsStatusSet = true;
+                    }
                 } else {
-                    isFriendOnline = false;
-                    coordinateStatusUpdates("Offline");
+                    // Friend is offline, so we remove the typing activity listener
+                    if (typingStateOfFriendListener != null) {
+                        typingStateOfFriendReference
+                                .removeEventListener(typingStateOfFriendListener);
+                    }
+
+                    setLastSeenOfFriend();
+                    friendsStatusSet = false;
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.w("Error", databaseError.toException().getMessage());
             }
         };
 
@@ -207,21 +213,20 @@ public class ChatActivity extends AppCompatActivity {
 
                 Boolean isTyping = dataSnapshot.getValue(Boolean.class);
 
-                if(isTyping != null){
+                if (isTyping != null) {
                     if (isTyping) {
-                        isFriendTyping = true;
-                        coordinateStatusUpdates("Typing");
+                        statusTextView.setText(R.string.is_typing);
                     } else {
-                        isFriendTyping = false;
-                        coordinateStatusUpdates("Not Typing");
+                        // We assume that if a client had sent a "false" value for isTyping,
+                        // and the listener was triggered, they'd still be online to do so.
+                        statusTextView.setText(R.string.user_online);
                     }
                 }
-
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.w("Error", databaseError.toException().getMessage());
             }
         };
 
@@ -229,50 +234,27 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    private void initializeLastSeenOfFriendListener() {
+    private void setLastSeenOfFriend() {
 
-        lastSeenOfFriendListener = new ValueEventListener() {
+        lastSeenOfFriendReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 Long lastSeen = dataSnapshot.getValue(Long.class);
 
-                if(lastSeen != null) {
+                if (lastSeen != null) {
                     statusTextView.setText("Last seen: " + lastSeen);
+                } else {
+                    statusTextView.setText(R.string.user_inactive);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.w("Error", databaseError.toException().getMessage());
             }
-        };
-
-        lastSeenOfFriendReference.addValueEventListener(lastSeenOfFriendListener);
+        });
     }
-
-    private void coordinateStatusUpdates(String state){
-
-        if(state.equals("Online") || state.equals("Typing")){
-
-            if(state.equals("Typing")){
-                // Online (implicit) and typing
-                statusTextView.setText(R.string.is_typing);
-            } else {
-                // Online but not typing
-                statusTextView.setText(R.string.user_online);
-            }
-        } else if (state.equals("Offline")){
-            // Offline
-            initializeLastSeenOfFriendListener();
-            statusTextView.setText("Last seen: ");
-
-        }
-
-    }
-
-
-
 
     private void initializeTypingState() {
         EditText chatMessageArea = binding.chatMessageArea;
