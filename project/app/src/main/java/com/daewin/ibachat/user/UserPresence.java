@@ -1,5 +1,7 @@
 package com.daewin.ibachat.user;
 
+import android.util.Log;
+
 import com.daewin.ibachat.model.UserModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -9,6 +11,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
+
+import static com.daewin.ibachat.user.User.getCurrentUsersEncodedEmail;
 
 /**
  * Helper function for user presence related functions
@@ -61,7 +65,7 @@ public class UserPresence {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    // TODO
+                    Log.w("Error", databaseError.toException().getMessage());
                 }
             };
 
@@ -83,20 +87,5 @@ public class UserPresence {
 
             userConnectionsReference.removeValue();
         }
-    }
-
-    private static String getCurrentUsersEncodedEmail() {
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                    currentFirebaseUser.getEmail());
-
-            if (currentUser.exists()) {
-                return User.getEncodedEmail(currentUser.getEmail());
-            }
-        }
-
-        return null;
     }
 }

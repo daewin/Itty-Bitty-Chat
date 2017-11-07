@@ -1,7 +1,9 @@
 package com.daewin.ibachat.user;
 
+import com.daewin.ibachat.model.UserModel;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -17,17 +19,43 @@ public class User {
 
     private static DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
 
+    // Guarantees that the returned user model if available, exists.
+    public static UserModel getCurrentUserModel() {
+        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (currentFirebaseUser != null) {
+            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
+                    currentFirebaseUser.getEmail());
+
+            if (currentUser.exists()) {
+                return currentUser;
+            }
+        }
+
+        return null;
+    }
+
+    public static String getCurrentUsersEncodedEmail() {
+
+        UserModel currentUser = getCurrentUserModel();
+
+        if (currentUser != null) {
+            return currentUser.getEncodedEmail();
+        }
+        return null;
+    }
+
     // If this user has just registered, create and fill their database
     // information into the Firebase Database.
     public static Task<Boolean> createUserDatabaseIfMissing(final FirebaseUser currentUser) {
 
         final TaskCompletionSource<Boolean> taskCompletionSource = new TaskCompletionSource<>();
 
-        String currentUsersEmail = currentUser.getEmail();
+        UserModel currentUserModel = getCurrentUserModel();
 
-        if (currentUsersEmail != null) {
-            final String name = currentUser.getDisplayName();
-            final String encodedEmail = getEncodedEmail(currentUsersEmail);
+        if (currentUserModel != null) {
+            final String name = currentUserModel.getName();
+            final String encodedEmail = currentUserModel.getEncodedEmail();
 
             mDatabase.child("users").child(encodedEmail)
                     .addListenerForSingleValueEvent(new ValueEventListener() {

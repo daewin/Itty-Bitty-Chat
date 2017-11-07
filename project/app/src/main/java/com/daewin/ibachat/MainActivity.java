@@ -40,31 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
     private MainActivityBinding binding;
     private ProgressBar progressBar;
-    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getLifecycle().addObserver(new MyLifecycleObserver());
-
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
         progressBar = binding.loginProgressBar;
         progressBar.animate();
-
-        // Shared Preferences for sign-in state
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        editor = preferences.edit();
-
-        // Obtain the sign-in state (if available) from the Application's database
-        String stateSharedPreferences = preferences.getString(PREFERENCES_NAME, "");
-
-        if(stateSharedPreferences.equals(PENDING_STATE)){
-            // This handles the case where the external sign-in flow (later on) ends up killing this
-            // activity and thus onCreate (where some logic happens) gets run _before_ the intended
-            // onActivityResult callback.
-            return;
-        }
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -79,10 +62,6 @@ public class MainActivity extends AppCompatActivity {
             binding.logoImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
-                    editor.putString(PREFERENCES_NAME, PENDING_STATE);
-                    editor.apply();
-
                     startActivityForResult(
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
@@ -108,9 +87,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        editor.remove(PREFERENCES_NAME);
-        editor.apply();
 
         if (requestCode == RC_SIGN_IN) {
             handleSignInResponse(resultCode, data);

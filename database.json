@@ -36,6 +36,7 @@
 			},
 
 			"connections": {
+				"-KyJZcQ1E_FLZEWbTXRo":
 
 			}
 		},
@@ -63,26 +64,30 @@
 	},
 
 	"thread_messages": {
-		"K45acvm0yDtMT7u5JrBhVlgv2wWS": {
+		"U45acvm0yDtMT7u5JrBhVlgv2wWP": {
 			"8yeVnISx6ohI9X1ZyKbAwBshEcFR": {
 				"user": "ada",
 				"message": "Hey!",
-				"timestamp": "2017-09-10T10:09:03"
+				"timestamp": "2017-09-10T10:09:03",
+				"seen": true
 			},
 			"628LVOUaHjNn0MyaxF0RlfZJ72SX": {
 				"user": "eleanor",
 				"message": "Hi",
-				"timestamp": "2017-09-10T10:13:20"
+				"timestamp": "2017-09-10T10:13:20",
+				"seen": true
 			},
 			"QlpTp95URyNk9FOmNDRwXnvbwtZB": {
 				"user": "ada",
 				"message": "How are you",
-				"timestamp": "2017-09-10T10:14:30"
+				"timestamp": "2017-09-10T10:14:30",
+				"seen": true
 			},
 			"8yeVn5Ux6ohI9X1ZyKbAwBImEcFR": {
 				"user": "eleanor",
 				"message": "Fine :>)",
-				"timestamp": "2017-09-10T10:15:30"
+				"timestamp": "2017-09-10T10:15:30",
+				"seen": false
 			}
 			//...
 		}

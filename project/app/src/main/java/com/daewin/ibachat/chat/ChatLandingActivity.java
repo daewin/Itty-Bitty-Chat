@@ -19,6 +19,7 @@ import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
 import com.daewin.ibachat.friends.FindFriendActivity;
 import com.daewin.ibachat.notification.NotificationActivity;
 import com.daewin.ibachat.settings.SettingsActivity;
+import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.user.UserPresence;
@@ -91,20 +92,16 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     private void initializeDatabaseReferences() {
         DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                    currentFirebaseUser.getEmail());
+        UserModel currentUser = User.getCurrentUserModel();
 
-            if (currentUser.exists()) {
-                String mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
+        if (currentUser != null) {
+            String mCurrentUsersEncodedEmail = currentUser.getEncodedEmail();
 
-                // Set a listener for notifications (currently it's just friend requests)
-                mRequestsReceivedReference = mDatabase.child("users")
-                        .child(mCurrentUsersEncodedEmail)
-                        .child("friend_requests_received");
-            }
+            // Set a listener for notifications (currently it's just friend requests)
+            mRequestsReceivedReference = mDatabase.child("users")
+                    .child(mCurrentUsersEncodedEmail)
+                    .child("friend_requests_received");
         }
     }
 

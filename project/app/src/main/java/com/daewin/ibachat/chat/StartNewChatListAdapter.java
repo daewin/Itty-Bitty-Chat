@@ -34,8 +34,8 @@ public class StartNewChatListAdapter extends SortedListAdapter<UserModel> {
     private DatabaseReference mDatabase;
 
     StartNewChatListAdapter(@NonNull Context context,
-                                   @NonNull Class<UserModel> aClass,
-                                   @NonNull Comparator<UserModel> comparator) {
+                            @NonNull Class<UserModel> aClass,
+                            @NonNull Comparator<UserModel> comparator) {
         super(context, aClass, comparator);
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
@@ -62,16 +62,11 @@ public class StartNewChatListAdapter extends SortedListAdapter<UserModel> {
             this.binding = binding;
 
             // Current user reference initialization
-            FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            UserModel currentUser = User.getCurrentUserModel();
 
-            if (currentFirebaseUser != null) {
-                UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                        currentFirebaseUser.getEmail());
-
-                if (currentUser.exists()) {
-                    currentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
-                    currentUsersName = currentUser.getName();
-                }
+            if (currentUser != null) {
+                currentUsersEncodedEmail = currentUser.getEncodedEmail();
+                currentUsersName = currentUser.getName();
             }
         }
 
@@ -164,7 +159,7 @@ public class StartNewChatListAdapter extends SortedListAdapter<UserModel> {
 
         private void createIndividualUserThreadIndex(String threadID,
                                                      String nameOfFriend,
-                                                     String encodedEmailOfFriend){
+                                                     String encodedEmailOfFriend) {
 
             DatabaseReference ourThreadWithFriend = mDatabase
                     .child("users")

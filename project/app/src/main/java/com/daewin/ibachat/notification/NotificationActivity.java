@@ -67,27 +67,22 @@ public class NotificationActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if(mNotificationsListener != null){
+        if (mNotificationsListener != null) {
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
         super.onStop();
     }
 
     private void initializeDatabaseReferences() {
-        DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users");
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        DatabaseReference userDatabase
+                = FirebaseDatabase.getInstance().getReference().child("users");
 
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                    currentFirebaseUser.getEmail());
+        String currentUsersEncodedEmail = User.getCurrentUsersEncodedEmail();
 
-            if (currentUser.exists()) {
-                String currentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
-
-                mRequestsReceivedReference = userDatabase
-                        .child(currentUsersEncodedEmail)
-                        .child("friend_requests_received");
-            }
+        if (currentUsersEncodedEmail != null) {
+            mRequestsReceivedReference = userDatabase
+                    .child(currentUsersEncodedEmail)
+                    .child("friend_requests_received");
         }
     }
 
@@ -119,17 +114,17 @@ public class NotificationActivity extends AppCompatActivity {
                     String name = snapshot.child("name").getValue(String.class);
                     Long timestamp = snapshot.child("timestamp").getValue(Long.class);
 
-                    if (timestamp != null){
+                    if (timestamp != null) {
                         UserRequestModel userRequestModel
                                 = new UserRequestModel(name, decodedEmail, timestamp);
 
-                        if(userRequestModel.exists()){
+                        if (userRequestModel.exists()) {
                             userRequestModels.add(userRequestModel);
                         }
                     }
                 }
 
-                if(userRequestModels.isEmpty()){
+                if (userRequestModels.isEmpty()) {
                     updateAdapterList(userRequestModels);
                     binding.noNotificationsTextView.setVisibility(View.VISIBLE);
                 } else {

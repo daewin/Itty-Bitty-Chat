@@ -2,6 +2,7 @@ package com.daewin.ibachat.model;
 
 import android.support.annotation.NonNull;
 
+import com.daewin.ibachat.user.User;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.database.Exclude;
 
@@ -39,6 +40,11 @@ public class UserModel implements SortedListAdapter.ViewModel {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Exclude
+    public String getEncodedEmail() {
+        return User.getEncodedEmail(getEmail());
     }
 
     @Exclude

@@ -41,16 +41,12 @@ public class NotificationListAdapter extends SortedListAdapter<UserRequestModel>
 
     private void initializeDatabaseReferences() {
         mUserDatabase = FirebaseDatabase.getInstance().getReference().child("users");
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                    currentFirebaseUser.getEmail());
+            UserModel currentUser = User.getCurrentUserModel();
 
-            if (currentUser.exists()) {
-                mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
+            if (currentUser != null) {
+                mCurrentUsersEncodedEmail = currentUser.getEncodedEmail();
                 mCurrentUsersName = currentUser.getName();
-            }
         }
     }
 

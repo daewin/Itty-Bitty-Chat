@@ -2,6 +2,8 @@ package com.daewin.ibachat.model;
 
 import android.support.annotation.NonNull;
 
+import com.google.firebase.database.Exclude;
+
 import java.util.Comparator;
 
 /**
@@ -17,6 +19,7 @@ public class UserRequestModel extends UserModel {
         this.timestamp = timestamp;
     }
 
+    @Exclude
     @Override
     public <T> boolean isSameModelAs(@NonNull T item) {
 
@@ -33,18 +36,20 @@ public class UserRequestModel extends UserModel {
         return false;
     }
 
+    @Exclude
     @Override
     public <T> boolean isContentTheSameAs(@NonNull T item) {
         return isSameModelAs(item);
     }
 
     // Comparator for the Sorted List in the Adapter
+    @Exclude
     public static final Comparator<UserRequestModel> timeComparator = new Comparator<UserRequestModel>() {
         @Override
         public int compare(UserRequestModel a, UserRequestModel b) {
 
-            Long timeA = a.timestamp;
-            Long timeB = b.timestamp;
+            Long timeA = a.getTimestamp();
+            Long timeB = b.getTimestamp();
 
             return timeB.compareTo(timeA);
         }

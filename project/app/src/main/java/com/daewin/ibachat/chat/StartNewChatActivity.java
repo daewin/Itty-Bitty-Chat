@@ -76,18 +76,11 @@ public class StartNewChatActivity extends AppCompatActivity {
         DatabaseReference userDatabase
                 = FirebaseDatabase.getInstance().getReference().child("users");
 
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        UserModel currentUser = User.getCurrentUserModel();
 
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                    currentFirebaseUser.getEmail());
-
-            if (currentUser.exists()) {
-                String currentUsersEncodedEmail
-                        = User.getEncodedEmail(currentFirebaseUser.getEmail());
-
-                friendsList = userDatabase.child(currentUsersEncodedEmail).child("friends");
-            }
+        if (currentUser != null) {
+            String currentUsersEncodedEmail = currentUser.getEncodedEmail();
+            friendsList = userDatabase.child(currentUsersEncodedEmail).child("friends");
         }
 
         userModels = new ArrayList<>();

@@ -49,28 +49,24 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
         initializeDatabaseReferences();
     }
 
-    private void initializeDatabaseReferences(){
+    private void initializeDatabaseReferences() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        UserModel currentUser = User.getCurrentUserModel();
 
-        if (currentFirebaseUser != null) {
-            UserModel currentUser = new UserModel(currentFirebaseUser.getDisplayName(),
-                                                    currentFirebaseUser.getEmail());
+        if (currentUser != null) {
+            mCurrentUsersEncodedEmail = currentUser.getEncodedEmail();
+            mCurrentUsersName = currentUser.getName();
 
-            if (currentUser.exists()) {
-                mCurrentUsersEncodedEmail = User.getEncodedEmail(currentUser.getEmail());
-                mCurrentUsersName = currentUser.getName();
+            mFriendsReference = mDatabase.child("users")
+                    .child(mCurrentUsersEncodedEmail)
+                    .child("friends")
+                    .getRef();
 
-                mFriendsReference = mDatabase.child("users")
-                        .child(mCurrentUsersEncodedEmail)
-                        .child("friends")
-                        .getRef();
+            mRequestsReference = mDatabase.child("users")
+                    .child(mCurrentUsersEncodedEmail)
+                    .child("friend_requests_sent")
+                    .getRef();
 
-                mRequestsReference = mDatabase.child("users")
-                        .child(mCurrentUsersEncodedEmail)
-                        .child("friend_requests_sent")
-                        .getRef();
-            }
         }
     }
 
@@ -90,7 +86,7 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
         FriendViewHolder friendViewHolder = (FriendViewHolder) holder;
         ValueEventListener friendsEventListener = friendViewHolder.friendsEventListener;
 
-        if(friendsEventListener != null){
+        if (friendsEventListener != null) {
             mFriendsReference.child(friendViewHolder.encodedFriendsEmail)
                     .removeEventListener(friendsEventListener);
         }
