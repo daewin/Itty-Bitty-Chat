@@ -13,19 +13,18 @@ public class MessageModel {
     private String email;
     private String message;
     private Long timestamp;
-    private Boolean seen;
+    private boolean seen;
 
     public MessageModel(){
         // Default constructor required for calls to DataSnapshot.getValue(ThreadModel.class)
     }
 
-    public MessageModel(String email, String message, Long timestamp, Boolean seen) {
+    public MessageModel(String email, String message, Long timestamp) {
         this.email = email;
         this.message = message;
         this.timestamp = timestamp;
-        this.seen = seen;
+        this.seen = false;
     }
-
 
     public String getEmail() {
         return email;
@@ -51,11 +50,11 @@ public class MessageModel {
         this.timestamp = timestamp;
     }
 
-    public Boolean getSeen() {
+    public boolean isSeen() {
         return seen;
     }
 
-    public void setSeen(Boolean seen) {
+    public void setSeen(boolean seen) {
         this.seen = seen;
     }
 
@@ -71,5 +70,4 @@ public class MessageModel {
             return timeB.compareTo(timeA);
         }
     };
-
 }

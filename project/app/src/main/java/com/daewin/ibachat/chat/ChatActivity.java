@@ -24,6 +24,7 @@ import com.daewin.ibachat.model.MessageModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -52,6 +53,7 @@ public class ChatActivity extends AppCompatActivity {
     private DatabaseReference typingStateOfUserReference;
     private DatabaseReference lastSeenOfFriendReference;
     private DatabaseReference threadMessagesReference;
+    private DatabaseReference friendSeenMessagesReference;
 
     // Listeners
     private ValueEventListener statusOfFriendListener;
@@ -137,6 +139,11 @@ public class ChatActivity extends AppCompatActivity {
                 .child(encodedEmailOfFriend)
                 .child("is_typing");
 
+        friendSeenMessagesReference
+                = currentThreadReference.child("members")
+                .child(encodedEmailOfFriend)
+                .child("seen");
+
         statusOfFriendReference
                 = databaseReference.child("users")
                 .child(encodedEmailOfFriend)
@@ -146,6 +153,7 @@ public class ChatActivity extends AppCompatActivity {
                 = databaseReference.child("users")
                 .child(encodedEmailOfFriend)
                 .child("lastSeen");
+
 
         // Current user reference initialization
         currentUser = User.getCurrentUserModel();
@@ -186,20 +194,19 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeRecyclerView() {
         mRecyclerView = binding.chatRecyclerView;
-        mRecyclerView.setHasFixedSize(true);
-
-        // Use a linear layout manager
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-        mLayoutManager.setReverseLayout(true);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
         messages = new ArrayList<>();
         pendingUpdates = new ArrayDeque<>();
 
         // Specify our adapter
         chatListAdapter = new ChatListAdapter(messages);
-
         mRecyclerView.setAdapter(chatListAdapter);
+        mRecyclerView.setHasFixedSize(true);
+
+        // Use a linear layout manager
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager.setReverseLayout(true);
+
+        mRecyclerView.setLayoutManager(mLayoutManager);
     }
 
     private void initializeTypingState() {
@@ -232,7 +239,7 @@ public class ChatActivity extends AppCompatActivity {
         typingStateOfUserReference.setValue(isTyping);
     }
 
-    private void initializeSendButtonBehaviour(){
+    private void initializeSendButtonBehaviour() {
 
         binding.chatSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -244,11 +251,15 @@ public class ChatActivity extends AppCompatActivity {
                     String email = currentUser.getEmail();
                     Long timestamp = System.currentTimeMillis();
 
-                    MessageModel messageModel
-                            = new MessageModel(email, message, timestamp, false);
+                    final MessageModel messageModel
+                            = new MessageModel(email, message, timestamp);
+
+                    // Add it locally to handle offline situations. Firebase handles the pushes
+                    // locally too until it reconnects with the database, which it then syncs after
+                    messages.add(messageModel);
+                    chatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
 
                     threadMessagesReference.push().setValue(messageModel);
-
                     binding.chatMessageArea.setText("");
                 }
             }
@@ -329,8 +340,26 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (lastSeen != null) {
                     TimestampInterpreter interpreter = new TimestampInterpreter(lastSeen);
-                    statusTextView
-                            .setText(String.format("Last seen at %s", interpreter.getFullDate()));
+                    String interpretation = interpreter.getTimestampInterpretation();
+
+                    switch (interpretation) {
+                        case TimestampInterpreter.TODAY:
+                            statusTextView
+                                    .setText(String.format("Last seen today at %s",
+                                            interpreter.getTime()));
+                            break;
+                        case TimestampInterpreter.YESTERDAY:
+                            statusTextView
+                                    .setText(String.format("Last seen yesterday at %s",
+                                            interpreter.getTime()));
+                            break;
+                        default:
+                            statusTextView
+                                    .setText(String.format("Last seen: %s",
+                                            interpreter.getFullDate()));
+                            break;
+                    }
+
                 } else {
                     statusTextView.setText(R.string.user_inactive);
                 }
@@ -388,9 +417,9 @@ public class ChatActivity extends AppCompatActivity {
         threadMessagesQuery.addValueEventListener(threadMessagesListener);
     }
 
-    // When new data becomes available or the thread message limit has been extended, this
-    // method handles slotting in the dates. It also uses a queue to allow concurrent
-    // updates, if the previous diffUtil call hasn't completed generating the diffResult yet.
+    // When new data becomes available or the thread message limit has been extended, this method
+    // handles updating the messages list. We use a queue to allow concurrent updates, if the
+    // previous diffUtil call hasn't completed generating the diffResult yet.
     // Based off: https://medium.com/@jonfhancock/get-threading-right-with-diffutil-423378e126d2
     private void updateMessagesList(ArrayList<MessageModel> newMessages) {
         pendingUpdates.add(newMessages);
@@ -399,11 +428,10 @@ public class ChatActivity extends AppCompatActivity {
             // One at a time.
             return;
         }
-
         updateMessagesListInternal(newMessages);
     }
 
-    // This method does the heavy lifting of pushing the work to the background thread
+    // This method does the heavy lifting of pushing the work to the background thread.
     private void updateMessagesListInternal(final ArrayList<MessageModel> newMessages) {
         final ArrayList<MessageModel> oldMessages = new ArrayList<>(messages);
         final Handler handler = new Handler();
@@ -456,7 +484,6 @@ public class ChatActivity extends AppCompatActivity {
 
 
     private class MyDiffCallback extends DiffUtil.Callback {
-
         ArrayList<MessageModel> oldList;
         ArrayList<MessageModel> newList;
 
@@ -482,14 +509,12 @@ public class ChatActivity extends AppCompatActivity {
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-
             MessageModel oldModel = oldList.get(oldItemPosition);
             MessageModel newModel = newList.get(newItemPosition);
 
             return oldModel.getEmail().equals(newModel.getEmail())
                     && oldModel.getMessage().equals(newModel.getMessage())
-                    && oldModel.getTimestamp().equals(newModel.getTimestamp())
-                    && oldModel.getSeen().equals(newModel.getSeen());
+                    && oldModel.getTimestamp().equals(newModel.getTimestamp());
         }
     }
 }

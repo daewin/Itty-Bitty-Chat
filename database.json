@@ -50,14 +50,18 @@
 
 	"threads": {
 		"U45acvm0yDtMT7u5JrBhVlgv2wWP": {
-			"lastMessage": "...",
-			"timestamp": 1509843023726,
+			"state": {
+				"lastMessage": "...",
+				"timestamp": 1509843023726
+			},
 			"members": {
 				"ada@gmail,com": {
-					"is_typing": true
+					"is_typing": true,
+					"seen": true
 				},
 				"eleanor@gmail,com": {
-					"is_typing": false
+					"is_typing": false,
+					"seen": false
 				},
 			}
 		},
@@ -68,26 +72,22 @@
 			"8yeVnISx6ohI9X1ZyKbAwBshEcFR": {
 				"user": "ada",
 				"message": "Hey!",
-				"timestamp": "2017-09-10T10:09:03",
-				"seen": true
+				"timestamp": "2017-09-10T10:09:03"
 			},
 			"628LVOUaHjNn0MyaxF0RlfZJ72SX": {
 				"user": "eleanor",
 				"message": "Hi",
-				"timestamp": "2017-09-10T10:13:20",
-				"seen": true
+				"timestamp": "2017-09-10T10:13:20"
 			},
 			"QlpTp95URyNk9FOmNDRwXnvbwtZB": {
 				"user": "ada",
 				"message": "How are you",
-				"timestamp": "2017-09-10T10:14:30",
-				"seen": true
+				"timestamp": "2017-09-10T10:14:30"
 			},
 			"8yeVn5Ux6ohI9X1ZyKbAwBImEcFR": {
 				"user": "eleanor",
 				"message": "Fine :>)",
-				"timestamp": "2017-09-10T10:15:30",
-				"seen": false
+				"timestamp": "2017-09-10T10:15:30"
 			}
 			//...
 		}
