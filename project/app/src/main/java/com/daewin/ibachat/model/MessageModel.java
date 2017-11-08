@@ -1,5 +1,7 @@
 package com.daewin.ibachat.model;
 
+import android.support.annotation.Nullable;
+
 import com.google.firebase.database.Exclude;
 
 import java.util.Comparator;
@@ -10,7 +12,7 @@ import java.util.Comparator;
 
 public class MessageModel {
 
-    private @Exclude String messageID;
+    private @Exclude @Nullable String messageID;
     private String email;
     private String message;
     private Long timestamp;
@@ -39,17 +41,6 @@ public class MessageModel {
         }
 
         return false;
-    }
-
-    public boolean hasBeenSeen(MessageModel other){
-        // When a message is sent, isSeen is always false
-        return (!this.isSeen() && other.isSeen());
-    }
-
-    public boolean isLiveData(MessageModel other){
-        // When a message is sent, liveData is always false
-
-        return (this.getMessageID() == null && other.getMessageID() != null);
     }
 
     public String getEmail() {
@@ -97,13 +88,14 @@ public class MessageModel {
         }
     };
 
+    @Nullable
     @Exclude
     public String getMessageID() {
         return messageID;
     }
 
     @Exclude
-    public void setMessageID(String messageID) {
+    public void setMessageID(@Nullable String messageID) {
         this.messageID = messageID;
     }
 }

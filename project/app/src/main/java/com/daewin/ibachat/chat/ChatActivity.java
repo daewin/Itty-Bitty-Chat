@@ -19,6 +19,7 @@ import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.databinding.ChatActivityBinding;
 import com.daewin.ibachat.model.MessageModel;
+import com.daewin.ibachat.model.ThreadModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
@@ -49,6 +50,8 @@ public class ChatActivity extends AppCompatActivity {
     private DatabaseReference typingStateOfUserReference;
     private DatabaseReference lastSeenOfFriendReference;
     private DatabaseReference threadMessagesReference;
+    private DatabaseReference friendsThreadReference;
+    private DatabaseReference usersThreadReference;
 
     // Listeners
     private ValueEventListener statusOfFriendListener;
@@ -82,7 +85,7 @@ public class ChatActivity extends AppCompatActivity {
         initializeActionBar(nameOfFriend);
         initializeRecyclerView(threadID);
         initializeTypingState();
-        initializeSendButtonBehaviour();
+        initializeSendButtonBehaviour(threadID);
     }
 
     @Override
@@ -124,36 +127,46 @@ public class ChatActivity extends AppCompatActivity {
         DatabaseReference currentThreadReference
                 = databaseReference.child("threads").child(threadID);
 
-        // Friend reference initialization
+
         String encodedEmailOfFriend
                 = User.getEncodedEmail(emailOfFriend);
 
-        typingStateOfFriendReference
-                = currentThreadReference.child("members")
-                .child(encodedEmailOfFriend)
-                .child("is_typing");
-
-        statusOfFriendReference
-                = databaseReference.child("users")
-                .child(encodedEmailOfFriend)
-                .child("connections");
-
-        lastSeenOfFriendReference
-                = databaseReference.child("users")
-                .child(encodedEmailOfFriend)
-                .child("lastSeen");
-
-
-        // Current user reference initialization
         currentUser = User.getCurrentUserModel();
 
         if (currentUser != null) {
             String currentUsersEncodedEmail = currentUser.getEncodedEmail();
 
+            // Friend reference initialization
+            typingStateOfFriendReference
+                    = currentThreadReference.child("members")
+                    .child(encodedEmailOfFriend)
+                    .child("is_typing");
+
+            statusOfFriendReference
+                    = databaseReference.child("users")
+                    .child(encodedEmailOfFriend)
+                    .child("connections");
+
+            lastSeenOfFriendReference
+                    = databaseReference.child("users")
+                    .child(encodedEmailOfFriend)
+                    .child("lastSeen");
+
+            friendsThreadReference = databaseReference.child("users")
+                    .child(encodedEmailOfFriend)
+                    .child("user_threads_with")
+                    .child(currentUsersEncodedEmail);
+
+            // Current user reference initialization
             typingStateOfUserReference
                     = currentThreadReference.child("members")
                     .child(currentUsersEncodedEmail)
                     .child("is_typing");
+
+            usersThreadReference = databaseReference.child("users")
+                    .child(currentUsersEncodedEmail)
+                    .child("user_threads_with")
+                    .child(encodedEmailOfFriend);
         }
 
         // Thread messages reference initialization
@@ -246,7 +259,7 @@ public class ChatActivity extends AppCompatActivity {
         typingStateOfUserReference.setValue(isTyping);
     }
 
-    private void initializeSendButtonBehaviour() {
+    private void initializeSendButtonBehaviour(final String threadID) {
 
         binding.chatSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -272,7 +285,15 @@ public class ChatActivity extends AppCompatActivity {
 
                     // Do this after adding locally to avoid double messages
                     threadMessagesReference.push().setValue(messageModel);
+
                     binding.chatMessageArea.setText("");
+
+                    // Push this message to both the user's thread nodes
+                    ThreadModel thread
+                            = new ThreadModel(threadID, currentUser.getName(), message, timestamp);
+
+                    friendsThreadReference.setValue(thread);
+                    usersThreadReference.setValue(thread);
                 }
             }
         });
@@ -386,10 +407,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeThreadMessagesEventListener() {
 
-        loadThreadMessages(THREAD_MESSAGES_LIMIT);
+        loadThreadMessages();
     }
 
-    private void loadThreadMessages(int threadMessageLimit) {
+    private void loadThreadMessages() {
 
         if (threadMessagesListener != null) {
             // Detach the old listener if it exists
@@ -406,7 +427,7 @@ public class ChatActivity extends AppCompatActivity {
 
                 MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
-                if(incomingMessage != null){
+                if (incomingMessage != null) {
 
                     // Since it's "live data", set the message ID to the push key
                     incomingMessage.setMessageID(dataSnapshot.getKey());
@@ -414,7 +435,7 @@ public class ChatActivity extends AppCompatActivity {
                     // To allow our local data to sync up properly, we check if the incoming
                     // message is "equals" (based on the email, message and timestamp) to the
                     // local message.
-                    if(messages.contains(incomingMessage)){
+                    if (messages.contains(incomingMessage)) {
                         int storedMessageIndex = messages.indexOf(incomingMessage);
                         MessageModel storedMessage = messages.get(storedMessageIndex);
 
@@ -441,8 +462,8 @@ public class ChatActivity extends AppCompatActivity {
                 // Currently, only the "seen" status can be changed
                 MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
-                if(incomingMessage != null){
-                    if(messages.contains(incomingMessage)){
+                if (incomingMessage != null) {
+                    if (messages.contains(incomingMessage)) {
                         int storedMessageIndex = messages.indexOf(incomingMessage);
                         MessageModel storedMessage = messages.get(storedMessageIndex);
 

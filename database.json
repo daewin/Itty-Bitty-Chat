@@ -14,10 +14,8 @@
 
 	"threads": {
 		"-KyGOJAYpKZJHCka8H2-": {
-			"state": {
-				"lastMessage": "Hey!",
-				"timestamp": 1510114430898
-			},
+			"lastMessage": "Hey!",
+			"timestamp": 1510114430898,
 			"members": {
 				"ada@gmail,com": {
 					"is_typing": true
