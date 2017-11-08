@@ -2,11 +2,9 @@ package com.daewin.ibachat.chat;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -24,7 +22,6 @@ import com.daewin.ibachat.model.MessageModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,10 +30,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Queue;
 
 /**
  */
@@ -46,7 +41,7 @@ public class ChatActivity extends AppCompatActivity {
     public static final String ARG_NAME_OF_FRIEND = "NAME_OF_FRIEND";
     public static final String ARG_EMAIL_OF_FRIEND = "EMAIL_OF_FRIEND";
     public static final String ARG_CURRENT_THREAD_ID = "CURRENT_THREAD_ID";
-    private static final int INITIAL_THREAD_MESSAGES_LIMIT = 50;
+    private static final int THREAD_MESSAGES_LIMIT = 50;
 
     // Database references
     private DatabaseReference statusOfFriendReference;
@@ -199,6 +194,26 @@ public class ChatActivity extends AppCompatActivity {
         mLayoutManager.setReverseLayout(true);
 
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+        // To allow endless scrolling (not working atm.)
+        //mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        //
+        //    @Override
+        //    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        //        int lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition();
+        //        int totalMessagesCount = mLayoutManager.getItemCount();
+        //
+        //        // Once we reach the top of the list, load more if any
+        //        if(moreMessagesToBeLoaded){
+        //            if ((lastVisibleItemPosition + 1 == totalMessagesCount)) {
+        //                System.err.println("Loading more..." + mThreadMessageLimit);
+        //                mThreadMessageLimit += THREAD_MESSAGES_LIMIT;
+        //                loadThreadMessages(mThreadMessageLimit);
+        //                moreMessagesToBeLoaded = false;
+        //            }
+        //        }
+        //    }
+        //});
     }
 
     private void initializeTypingState() {
@@ -371,7 +386,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeThreadMessagesEventListener() {
 
-        loadThreadMessages(INITIAL_THREAD_MESSAGES_LIMIT);
+        loadThreadMessages(THREAD_MESSAGES_LIMIT);
     }
 
     private void loadThreadMessages(int threadMessageLimit) {
@@ -382,7 +397,8 @@ public class ChatActivity extends AppCompatActivity {
             threadMessagesQuery.removeEventListener(threadMessagesListener);
         }
 
-        threadMessagesQuery = threadMessagesReference.limitToFirst(threadMessageLimit);
+        //threadMessagesQuery = threadMessagesReference.limitToFirst(threadMessageLimit);
+        threadMessagesQuery = threadMessagesReference;
 
         threadMessagesListener = new ChildEventListener() {
             @Override

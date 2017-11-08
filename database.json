@@ -1,4 +1,34 @@
 {
+	"thread_messages": {
+		"-KyGOJAYpKZJHCka8H2-": {
+			"-KyOpOM4_cyjF6p54O_M": {
+				"user": "ada@gmail.com",
+				"message": "Hey!",
+				"seen": true,
+				"timestamp": 1510114430898
+			}
+			//...
+		}
+		//...
+	},
+
+	"threads": {
+		"-KyGOJAYpKZJHCka8H2-": {
+			"state": {
+				"lastMessage": "Hey!",
+				"timestamp": 1510114430898
+			},
+			"members": {
+				"ada@gmail,com": {
+					"is_typing": true
+				},
+				"eleanor@gmail,com": {
+					"is_typing": false
+				},
+			}
+		},
+	},
+
 	"users": {
 		"ada@gmail,com": {
 			"name": "Ada",
@@ -12,11 +42,11 @@
 
 			"user_threads_with": {
 				"eleanor@gmail,com": {
-					"id": "U45acvm0yDtMT7u5JrBhVlgv2wWP",
+					"id": "-KyGOJAYpKZJHCka8H2-",
 					"name": "Eleanor"
 					},
 				"charlie@gmail,com": {
-					"id": "XRhELMWwKF1vP7Ja4i2R0rXnrDI7",
+					"id": "-KyGOJAghAKZJHCka8H5-",
 					"name": "Charlie"
 					},
 				//...
@@ -36,61 +66,16 @@
 			},
 
 			"connections": {
-				"-KyJZcQ1E_FLZEWbTXRo":
-
+				"-KyJZcQ1E_FLZEWbTXRo": true
 			}
 		},
 		//...
 	},
 
 	"users_index": {
-		"ada@gmail,com": "Ada",
-		//...
-	},
-
-	"threads": {
-		"U45acvm0yDtMT7u5JrBhVlgv2wWP": {
-			"state": {
-				"lastMessage": "...",
-				"timestamp": 1509843023726
+		"ada@gmail,com": {
+			"name": "Ada"
 			},
-			"members": {
-				"ada@gmail,com": {
-					"is_typing": true,
-					"seen": true
-				},
-				"eleanor@gmail,com": {
-					"is_typing": false,
-					"seen": false
-				},
-			}
-		},
-	},
-
-	"thread_messages": {
-		"U45acvm0yDtMT7u5JrBhVlgv2wWP": {
-			"8yeVnISx6ohI9X1ZyKbAwBshEcFR": {
-				"user": "ada",
-				"message": "Hey!",
-				"timestamp": "2017-09-10T10:09:03"
-			},
-			"628LVOUaHjNn0MyaxF0RlfZJ72SX": {
-				"user": "eleanor",
-				"message": "Hi",
-				"timestamp": "2017-09-10T10:13:20"
-			},
-			"QlpTp95URyNk9FOmNDRwXnvbwtZB": {
-				"user": "ada",
-				"message": "How are you",
-				"timestamp": "2017-09-10T10:14:30"
-			},
-			"8yeVn5Ux6ohI9X1ZyKbAwBImEcFR": {
-				"user": "eleanor",
-				"message": "Fine :>)",
-				"timestamp": "2017-09-10T10:15:30"
-			}
-			//...
-		}
 		//...
 	}
 }

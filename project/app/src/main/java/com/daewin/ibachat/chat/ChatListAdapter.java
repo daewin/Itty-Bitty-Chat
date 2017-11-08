@@ -157,10 +157,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
                 chatSentItemBinding.setTime(time);
 
                 if(messageModel.isSeen()){
-                    System.err.println(message+ " IS SEEN");
                     chatSentItemBinding.seenImageView.setVisibility(View.VISIBLE);
                 } else {
-                    System.err.println(message + " NOT SEEN");
                     chatSentItemBinding.seenImageView.setVisibility(View.INVISIBLE);
                 }
 
