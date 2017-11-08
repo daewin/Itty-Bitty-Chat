@@ -25,6 +25,7 @@ import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -53,17 +54,15 @@ public class ChatActivity extends AppCompatActivity {
     private DatabaseReference typingStateOfUserReference;
     private DatabaseReference lastSeenOfFriendReference;
     private DatabaseReference threadMessagesReference;
-    private DatabaseReference friendSeenMessagesReference;
 
     // Listeners
     private ValueEventListener statusOfFriendListener;
     private ValueEventListener typingStateOfFriendListener;
-    private ValueEventListener threadMessagesListener;
+    private ChildEventListener threadMessagesListener;
 
     private ChatActivityBinding binding;
     private TextView statusTextView;
     private ArrayList<MessageModel> messages;
-    private Queue<ArrayList<MessageModel>> pendingUpdates;
     private ChatListAdapter chatListAdapter;
     private Query threadMessagesQuery;
     private RecyclerView mRecyclerView;
@@ -86,7 +85,7 @@ public class ChatActivity extends AppCompatActivity {
 
         initializeDatabase(emailOfFriend, threadID);
         initializeActionBar(nameOfFriend);
-        initializeRecyclerView();
+        initializeRecyclerView(threadID);
         initializeTypingState();
         initializeSendButtonBehaviour();
     }
@@ -139,11 +138,6 @@ public class ChatActivity extends AppCompatActivity {
                 .child(encodedEmailOfFriend)
                 .child("is_typing");
 
-        friendSeenMessagesReference
-                = currentThreadReference.child("members")
-                .child(encodedEmailOfFriend)
-                .child("seen");
-
         statusOfFriendReference
                 = databaseReference.child("users")
                 .child(encodedEmailOfFriend)
@@ -169,8 +163,7 @@ public class ChatActivity extends AppCompatActivity {
 
         // Thread messages reference initialization
         threadMessagesReference
-                = databaseReference.child("thread_messages")
-                .child(threadID);
+                = databaseReference.child("thread_messages").child(threadID);
     }
 
     private void initializeActionBar(String nameOfFriend) {
@@ -192,13 +185,12 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeRecyclerView() {
+    private void initializeRecyclerView(String threadID) {
         mRecyclerView = binding.chatRecyclerView;
         messages = new ArrayList<>();
-        pendingUpdates = new ArrayDeque<>();
 
         // Specify our adapter
-        chatListAdapter = new ChatListAdapter(messages);
+        chatListAdapter = new ChatListAdapter(messages, threadID);
         mRecyclerView.setAdapter(chatListAdapter);
         mRecyclerView.setHasFixedSize(true);
 
@@ -247,7 +239,6 @@ public class ChatActivity extends AppCompatActivity {
                 String message = binding.chatMessageArea.getText().toString();
 
                 if (!message.isEmpty()) {
-
                     String email = currentUser.getEmail();
                     Long timestamp = System.currentTimeMillis();
 
@@ -257,8 +248,14 @@ public class ChatActivity extends AppCompatActivity {
                     // Add it locally to handle offline situations. Firebase handles the pushes
                     // locally too until it reconnects with the database, which it then syncs after
                     messages.add(messageModel);
-                    chatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
 
+                    // According to the docs, sorting a nearly-sorted list (this as it builds up)
+                    // requires only n comparisons, which is acceptable.
+                    Collections.sort(messages, MessageModel.timeComparator);
+                    chatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
+                    mRecyclerView.smoothScrollToPosition(0);
+
+                    // Do this after adding locally to avoid double messages
                     threadMessagesReference.push().setValue(messageModel);
                     binding.chatMessageArea.setText("");
                 }
@@ -387,22 +384,66 @@ public class ChatActivity extends AppCompatActivity {
 
         threadMessagesQuery = threadMessagesReference.limitToFirst(threadMessageLimit);
 
-        threadMessagesListener = new ValueEventListener() {
+        threadMessagesListener = new ChildEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayList<MessageModel> newMessages = new ArrayList<>();
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
-                for (DataSnapshot messagesSnapshot : dataSnapshot.getChildren()) {
-                    MessageModel incomingMessage = messagesSnapshot.getValue(MessageModel.class);
+                MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
-                    if (incomingMessage != null) {
-                        newMessages.add(incomingMessage);
+                if(incomingMessage != null){
+
+                    // Since it's "live data", set the message ID to the push key
+                    incomingMessage.setMessageID(dataSnapshot.getKey());
+
+                    // To allow our local data to sync up properly, we check if the incoming
+                    // message is "equals" (based on the email, message and timestamp) to the
+                    // local message.
+                    if(messages.contains(incomingMessage)){
+                        int storedMessageIndex = messages.indexOf(incomingMessage);
+                        MessageModel storedMessage = messages.get(storedMessageIndex);
+
+                        // We set the message ID, but we don't have to notify to avoid unnecessary
+                        // layout redraws. Any changes will be handled in onChildChanged
+                        storedMessage.setMessageID(incomingMessage.getMessageID());
+                        chatListAdapter.notifyItemChanged(storedMessageIndex);
+                        return;
+                    }
+
+                    messages.add(incomingMessage);
+
+                    // According to the docs, sorting a nearly-sorted list (this as it builds up)
+                    // requires only n comparisons, which is acceptable.
+                    Collections.sort(messages, MessageModel.timeComparator);
+                    chatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
+
+                    mRecyclerView.smoothScrollToPosition(0);
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                // Currently, only the "seen" status can be changed
+                MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
+
+                if(incomingMessage != null){
+                    if(messages.contains(incomingMessage)){
+                        int storedMessageIndex = messages.indexOf(incomingMessage);
+                        MessageModel storedMessage = messages.get(storedMessageIndex);
+
+                        storedMessage.setSeen(incomingMessage.isSeen());
+                        chatListAdapter.notifyItemChanged(storedMessageIndex);
                     }
                 }
+            }
 
-                // Sort according to time
-                Collections.sort(newMessages, MessageModel.timeComparator);
-                updateMessagesList(newMessages);
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                // Removing messages is not currently supported
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                // Shouldn't happen
             }
 
             @Override
@@ -414,107 +455,12 @@ public class ChatActivity extends AppCompatActivity {
         // Firebase has been set to cache the Queries, so that future calls would not
         // have to reload the same messages (hopefully)
         threadMessagesQuery.keepSynced(true);
-        threadMessagesQuery.addValueEventListener(threadMessagesListener);
-    }
-
-    // When new data becomes available or the thread message limit has been extended, this method
-    // handles updating the messages list. We use a queue to allow concurrent updates, if the
-    // previous diffUtil call hasn't completed generating the diffResult yet.
-    // Based off: https://medium.com/@jonfhancock/get-threading-right-with-diffutil-423378e126d2
-    private void updateMessagesList(ArrayList<MessageModel> newMessages) {
-        pendingUpdates.add(newMessages);
-
-        if (pendingUpdates.size() > 1) {
-            // One at a time.
-            return;
-        }
-        updateMessagesListInternal(newMessages);
-    }
-
-    // This method does the heavy lifting of pushing the work to the background thread.
-    private void updateMessagesListInternal(final ArrayList<MessageModel> newMessages) {
-        final ArrayList<MessageModel> oldMessages = new ArrayList<>(messages);
-        final Handler handler = new Handler();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                MyDiffCallback myDiffCallback = new MyDiffCallback(oldMessages, newMessages);
-
-                final DiffUtil.DiffResult diffResult
-                        = DiffUtil.calculateDiff(myDiffCallback, false);
-
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        applyDiffResult(newMessages, diffResult);
-                    }
-                });
-            }
-        }).start();
-    }
-
-    // This method is called when the background work is done
-    private void applyDiffResult(ArrayList<MessageModel> newMessages,
-                                 DiffUtil.DiffResult diffResult) {
-
-        pendingUpdates.remove();
-        dispatchUpdates(newMessages, diffResult);
-
-        if (pendingUpdates.size() > 0) {
-            updateMessagesListInternal(pendingUpdates.peek());
-        }
-    }
-
-    private void dispatchUpdates(ArrayList<MessageModel> newMessages,
-                                 DiffUtil.DiffResult diffResult) {
-
-        messages.clear();
-        messages.addAll(newMessages);
-        diffResult.dispatchUpdatesTo(chatListAdapter);
-        mRecyclerView.smoothScrollToPosition(0);
+        threadMessagesQuery.addChildEventListener(threadMessagesListener);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
-    }
-
-
-    private class MyDiffCallback extends DiffUtil.Callback {
-        ArrayList<MessageModel> oldList;
-        ArrayList<MessageModel> newList;
-
-        MyDiffCallback(ArrayList<MessageModel> oldList, ArrayList<MessageModel> newList) {
-            this.oldList = oldList;
-            this.newList = newList;
-        }
-
-        @Override
-        public int getOldListSize() {
-            return oldList.size();
-        }
-
-        @Override
-        public int getNewListSize() {
-            return newList.size();
-        }
-
-        @Override
-        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            return areContentsTheSame(oldItemPosition, newItemPosition);
-        }
-
-        @Override
-        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            MessageModel oldModel = oldList.get(oldItemPosition);
-            MessageModel newModel = newList.get(newItemPosition);
-
-            return oldModel.getEmail().equals(newModel.getEmail())
-                    && oldModel.getMessage().equals(newModel.getMessage())
-                    && oldModel.getTimestamp().equals(newModel.getTimestamp());
-        }
     }
 }

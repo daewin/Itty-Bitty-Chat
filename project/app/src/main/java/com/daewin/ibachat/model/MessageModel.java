@@ -10,12 +10,13 @@ import java.util.Comparator;
 
 public class MessageModel {
 
+    private @Exclude String messageID;
     private String email;
     private String message;
     private Long timestamp;
     private boolean seen;
 
-    public MessageModel(){
+    public MessageModel() {
         // Default constructor required for calls to DataSnapshot.getValue(ThreadModel.class)
     }
 
@@ -24,6 +25,31 @@ public class MessageModel {
         this.message = message;
         this.timestamp = timestamp;
         this.seen = false;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj instanceof MessageModel) {
+            final MessageModel other = (MessageModel) obj;
+
+            return other.getEmail().equals(this.getEmail())
+                    && other.getMessage().equals(this.getMessage())
+                    && other.getTimestamp().equals(this.getTimestamp());
+        }
+
+        return false;
+    }
+
+    public boolean hasBeenSeen(MessageModel other){
+        // When a message is sent, isSeen is always false
+        return (!this.isSeen() && other.isSeen());
+    }
+
+    public boolean isLiveData(MessageModel other){
+        // When a message is sent, liveData is always false
+
+        return (this.getMessageID() == null && other.getMessageID() != null);
     }
 
     public String getEmail() {
@@ -70,4 +96,14 @@ public class MessageModel {
             return timeB.compareTo(timeA);
         }
     };
+
+    @Exclude
+    public String getMessageID() {
+        return messageID;
+    }
+
+    @Exclude
+    public void setMessageID(String messageID) {
+        this.messageID = messageID;
+    }
 }

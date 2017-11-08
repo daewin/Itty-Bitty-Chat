@@ -29,9 +29,16 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
 
     private ArrayList<MessageModel> messages;
     private String currentUsersEmail;
+    private DatabaseReference threadMessagesReference;
 
-    ChatListAdapter(ArrayList<MessageModel> messages) {
+    ChatListAdapter(ArrayList<MessageModel> messages, String threadID) {
         this.messages = messages;
+
+        DatabaseReference databaseReference
+                = FirebaseDatabase.getInstance().getReference();
+
+        threadMessagesReference
+                = databaseReference.child("thread_messages").child(threadID);
 
         UserModel userModel = User.getCurrentUserModel();
         if (userModel != null && userModel.exists()) {
@@ -56,6 +63,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
     }
 
     @Override
+    public int getItemViewType(int position) {
+        MessageModel messageModel = messages.get(position);
+
+        if (messageModel.getEmail().equals(currentUsersEmail)) {
+            return VIEW_TYPE_MESSAGE_SENT;
+        } else {
+            return VIEW_TYPE_MESSAGE_RECEIVED;
+        }
+    }
+
+    @Override
     public void onBindViewHolder(MessageViewHolder holder, int position) {
         MessageModel messageModel = messages.get(position);
         holder.bindTo(messageModel);
@@ -65,17 +83,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
     public void onBindViewHolder(MessageViewHolder holder, int position, List<Object> payloads) {
         MessageModel messageModel = messages.get(position);
         holder.bindTo(messageModel);
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        MessageModel messageModel = messages.get(position);
-
-        if (messageModel.getEmail().equals(currentUsersEmail)) {
-            return VIEW_TYPE_MESSAGE_SENT;
-        } else {
-            return VIEW_TYPE_MESSAGE_RECEIVED;
-        }
     }
 
     @Override
@@ -100,7 +107,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
                     = new TimestampInterpreter(messageModel.getTimestamp());
 
             String interpretation = interpreter.getTimestampInterpretation();
-            String message = messageModel.getMessage();
             String time;
 
             switch (interpretation) {
@@ -117,10 +123,12 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
                     break;
             }
 
-            setIndividualItemBinding(message, time);
+            setIndividualItemBinding(messageModel, time);
         }
 
-        void setIndividualItemBinding(String message, String time) {
+        void setIndividualItemBinding(MessageModel messageModel, String time) {
+
+            String message = messageModel.getMessage();
 
             if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
 
@@ -129,12 +137,33 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
                 chatReceivedItemBinding.setMessage(message);
                 chatReceivedItemBinding.setTime(time);
                 chatReceivedItemBinding.executePendingBindings();
+
+                if(!chatReceivedItemBinding.messageTextView.isInLayout()){
+                    chatReceivedItemBinding.messageTextView.requestLayout();
+                }
+
+                if(!messageModel.isSeen()){
+                    String messageID = messageModel.getMessageID();
+                    if(messageID != null && !messageID.isEmpty()) {
+                        threadMessagesReference.child(messageID).child("seen").setValue(true);
+                    }
+                }
+
             } else {
 
                 ChatSentItemBinding chatSentItemBinding = (ChatSentItemBinding) binding;
 
                 chatSentItemBinding.setMessage(message);
                 chatSentItemBinding.setTime(time);
+
+                if(messageModel.isSeen()){
+                    System.err.println(message+ " IS SEEN");
+                    chatSentItemBinding.seenImageView.setVisibility(View.VISIBLE);
+                } else {
+                    System.err.println(message + " NOT SEEN");
+                    chatSentItemBinding.seenImageView.setVisibility(View.INVISIBLE);
+                }
+
                 chatSentItemBinding.executePendingBindings();
 
                 if(!chatSentItemBinding.messageTextView.isInLayout()){
