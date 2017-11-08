@@ -115,7 +115,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
                     break;
 
                 case TimestampInterpreter.YESTERDAY:
-                    time = "yesterday at interpreter.getTime()";
+                    time = "yesterday at " + interpreter.getTime();
                     break;
 
                 default:
