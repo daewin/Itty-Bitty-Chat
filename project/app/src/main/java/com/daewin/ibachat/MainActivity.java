@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 // If the user has just registered, create a task to inform us when the
                 // database information has been created successfully (or unsuccessfully)
 
-                User.createUserDatabaseIfMissing(currentUser)
+                User.createUserDatabaseIfMissing()
                         .addOnSuccessListener(new OnSuccessListener<Boolean>() {
 
                     @Override

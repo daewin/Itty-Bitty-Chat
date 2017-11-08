@@ -83,17 +83,13 @@ public class ChatLandingActivity extends AppCompatActivity {
         });
 
         binding.chatLandingProgressBar.setVisibility(View.VISIBLE);
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         initializeUserThreads();
         initializeNotifications();
     }
 
     @Override
-    protected void onStop() {
+    protected void onDestroy() {
         if (mNotificationsListener != null) {
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
@@ -103,7 +99,7 @@ public class ChatLandingActivity extends AppCompatActivity {
         }
 
         mUserThreadsReference.keepSynced(false);
-        super.onStop();
+        super.onDestroy();
     }
 
     private void initializeDatabaseReferences() {

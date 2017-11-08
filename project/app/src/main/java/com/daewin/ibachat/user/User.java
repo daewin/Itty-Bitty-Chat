@@ -47,17 +47,17 @@ public class User {
 
     // If this user has just registered, create and fill their database
     // information into the Firebase Database.
-    public static Task<Boolean> createUserDatabaseIfMissing(final FirebaseUser currentUser) {
+    public static Task<Boolean> createUserDatabaseIfMissing() {
 
         final TaskCompletionSource<Boolean> taskCompletionSource = new TaskCompletionSource<>();
 
         UserModel currentUserModel = getCurrentUserModel();
 
-        if (currentUserModel != null) {
+        if (currentUserModel != null ) {
             final String name = currentUserModel.getName();
             final String encodedEmail = currentUserModel.getEncodedEmail();
 
-            mDatabase.child("users").child(encodedEmail)
+            mDatabase.child("users_index").child(encodedEmail)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {

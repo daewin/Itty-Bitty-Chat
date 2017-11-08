@@ -24,13 +24,6 @@ public class ThreadModel implements SortedListAdapter.ViewModel {
         // Default constructor required for calls to DataSnapshot.getValue(ThreadModel.class)
     }
 
-    public ThreadModel(String id, String name, String lastMessage, Long timestamp) {
-        this.id = id;
-        this.name = name;
-        this.lastMessage = lastMessage;
-        this.timestamp = timestamp;
-    }
-
     @Override
     public <T> boolean isSameModelAs(@NonNull T item) {
         if(item instanceof ThreadModel){

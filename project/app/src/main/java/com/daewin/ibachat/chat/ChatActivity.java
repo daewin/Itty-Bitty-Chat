@@ -288,12 +288,12 @@ public class ChatActivity extends AppCompatActivity {
 
                     binding.chatMessageArea.setText("");
 
-                    // Push this message to both the user's thread nodes
-                    ThreadModel thread
-                            = new ThreadModel(threadID, currentUser.getName(), message, timestamp);
+                    // Push the message and timestamp to both the user's thread nodes
+                    friendsThreadReference.child("lastMessage").setValue(message);
+                    friendsThreadReference.child("timestamp").setValue(timestamp);
 
-                    friendsThreadReference.setValue(thread);
-                    usersThreadReference.setValue(thread);
+                    usersThreadReference.child("lastMessage").setValue(message);
+                    usersThreadReference.child("timestamp").setValue(timestamp);
                 }
             }
         });
