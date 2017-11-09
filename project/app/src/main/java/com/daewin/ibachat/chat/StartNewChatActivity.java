@@ -5,9 +5,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
 
 import com.daewin.ibachat.MyLifecycleObserver;
@@ -61,13 +63,18 @@ public class StartNewChatActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
 
         // Use a linear layout manager
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(layoutManager);
 
         // Specify our adapter
         mStartNewChatListAdapter = new StartNewChatListAdapter
                 (this, UserModel.class, UserModel.alphabeticalComparator);
 
         mRecyclerView.setAdapter(mStartNewChatListAdapter);
+
+        mRecyclerView.addItemDecoration
+                (new DividerItemDecoration(mRecyclerView.getContext(),
+                        layoutManager.getOrientation()));
     }
 
     private void initializeFriendsList() {
