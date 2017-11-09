@@ -13,9 +13,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import com.daewin.ibachat.chat.ChatLandingActivity;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.MainActivityBinding;
 import com.daewin.ibachat.user.User;
 import com.firebase.ui.auth.AuthUI;
@@ -27,60 +27,79 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
- * Main Activity to coordinate login process
+ * Main Activity to coordinate the login process
  */
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
+    private static final String PERSISTENCE_STATE = "persistence_state";
+    private static final String PERSISTENCE_STATE_SET = "persistence_state_set";
 
     private MainActivityBinding binding;
-    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getLifecycle().addObserver(new MyLifecycleObserver());
+
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
-        progressBar = binding.loginProgressBar;
-        progressBar.animate();
-
+        // Go straight to the chat landing activity or show the login screen
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-
-            progressBar.setVisibility(View.GONE);
             startChatActivity(null);
 
         } else {
-            progressBar.setVisibility(View.GONE);
             binding.loginIndicatorTextView.setVisibility(View.VISIBLE);
-
             binding.logoImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setLogo(R.drawable.iba_icon)
-                                    .setTheme(R.style.NoActionBarTheme)
-                                    .setAvailableProviders(
-                                            Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
-                                                    new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
-                                                    new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
-                                                    new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build()))
-                                    .build(),
-                            RC_SIGN_IN);
+                    startLoginActivity();
                 }
             });
+        }
+    }
+
+    private void setDatabasePersistenceOnColdLaunch() {
+        // Shared Preferences for persistence state
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        // Obtain the persistence state
+        String persistenceState = preferences.getString(PERSISTENCE_STATE, "");
+
+        if (!persistenceState.equals(PERSISTENCE_STATE_SET)) {
+
+            DatabaseUtil.getDatabase().setPersistenceEnabled(true);
+
+            editor.putString(PERSISTENCE_STATE, PERSISTENCE_STATE_SET);
+            editor.apply();
         }
     }
 
     private void startChatActivity(IdpResponse response) {
         startActivity(ChatLandingActivity.createIntent(this, response));
         finish();
+    }
+
+    private void startLoginActivity() {
+        List<AuthUI.IdpConfig> providers
+                = Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+                new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
+                new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
+                new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build());
+
+        Intent loginIntent = AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setTheme(R.style.NoActionBarTheme)
+                .setAvailableProviders(providers)
+                .build();
+
+        startActivityForResult(loginIntent, RC_SIGN_IN);
     }
 
     @Override
@@ -102,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         // Successfully signed in
         if (resultCode == RESULT_OK) {
 
-            progressBar.setVisibility(View.VISIBLE);
+            binding.loginProgressBar.setVisibility(View.VISIBLE);
             binding.loginIndicatorTextView.setVisibility(View.GONE);
 
             final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -114,21 +133,25 @@ public class MainActivity extends AppCompatActivity {
                 User.createUserDatabaseIfMissing()
                         .addOnSuccessListener(new OnSuccessListener<Boolean>() {
 
-                    @Override
-                    public void onSuccess(Boolean aBoolean) {
-                        startChatActivity(response);
-                    }
+                            @Override
+                            public void onSuccess(Boolean aBoolean) {
+                                startChatActivity(response);
+                            }
 
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("Error", e.getMessage());
-                        showSnackbar(R.string.firebase_error);
-                        FirebaseAuth.getInstance().signOut();
-                    }
-                });
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("Error", e.getMessage());
+                                showSnackbar(R.string.firebase_error);
+                                binding.loginProgressBar.setVisibility(View.INVISIBLE);
+                                binding.loginIndicatorTextView.setVisibility(View.VISIBLE);
+                                FirebaseAuth.getInstance().signOut();
+                            }
+                        });
             } else {
-                progressBar.setVisibility(View.INVISIBLE);
+                binding.loginProgressBar.setVisibility(View.INVISIBLE);
                 binding.loginIndicatorTextView.setVisibility(View.VISIBLE);
                 showSnackbar(R.string.unknown_error);
             }
@@ -161,14 +184,14 @@ public class MainActivity extends AppCompatActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
 
-        if(hasFocus){
+        if (hasFocus) {
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
 

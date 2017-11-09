@@ -12,15 +12,13 @@ import android.widget.SearchView;
 
 import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.StartNewChatActivityBinding;
-import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.model.UserModel;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.daewin.ibachat.user.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -74,7 +72,7 @@ public class StartNewChatActivity extends AppCompatActivity {
 
     private void initializeFriendsList() {
         DatabaseReference userDatabase
-                = FirebaseDatabase.getInstance().getReference().child("users");
+                = DatabaseUtil.getDatabase().getReference().child("users");
 
         UserModel currentUser = User.getCurrentUserModel();
 

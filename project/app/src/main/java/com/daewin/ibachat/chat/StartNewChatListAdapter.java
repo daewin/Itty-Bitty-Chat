@@ -7,8 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.StartNewChatItemBinding;
-import com.daewin.ibachat.model.ThreadModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.user.User;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
@@ -16,12 +16,9 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Comparator;
@@ -37,7 +34,7 @@ public class StartNewChatListAdapter extends SortedListAdapter<UserModel> {
                             @NonNull Class<UserModel> aClass,
                             @NonNull Comparator<UserModel> comparator) {
         super(context, aClass, comparator);
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase = DatabaseUtil.getDatabase().getReference();
     }
 
     @NonNull

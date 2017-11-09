@@ -17,19 +17,18 @@ import android.view.View;
 
 import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.ChatLandingActivityBinding;
 import com.daewin.ibachat.friends.FindFriendActivity;
-import com.daewin.ibachat.model.MessageModel;
 import com.daewin.ibachat.model.ThreadModel;
+import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.notification.NotificationActivity;
 import com.daewin.ibachat.settings.SettingsActivity;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.model.UserModel;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public class ChatLandingActivity extends AppCompatActivity {
     }
 
     private void initializeDatabaseReferences() {
-        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference mDatabase = DatabaseUtil.getDatabase().getReference();
 
         UserModel currentUser = User.getCurrentUserModel();
 

@@ -1,5 +1,8 @@
 package com.daewin.ibachat.user;
 
+import android.support.annotation.Nullable;
+
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.model.UserModel;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -8,7 +11,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 /**
@@ -17,9 +19,11 @@ import com.google.firebase.database.ValueEventListener;
 
 public class User {
 
-    private static DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
+    private static DatabaseReference mDatabase = DatabaseUtil.getDatabase().getReference();
 
-    // Guarantees that the returned user model if available, exists.
+
+    // Guarantees that the returned user model exists, if available.
+    @Nullable
     public static UserModel getCurrentUserModel() {
         FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -35,6 +39,7 @@ public class User {
         return null;
     }
 
+    @Nullable
     public static String getCurrentUsersEncodedEmail() {
 
         UserModel currentUser = getCurrentUserModel();
@@ -53,11 +58,12 @@ public class User {
 
         UserModel currentUserModel = getCurrentUserModel();
 
-        if (currentUserModel != null ) {
+        if (currentUserModel != null) {
             final String name = currentUserModel.getName();
             final String encodedEmail = currentUserModel.getEncodedEmail();
 
-            mDatabase.child("users_index").child(encodedEmail)
+            mDatabase.child("users_index")
+                    .child(encodedEmail)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {

@@ -17,9 +17,9 @@ import android.widget.TextView;
 
 import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.ChatActivityBinding;
 import com.daewin.ibachat.model.MessageModel;
-import com.daewin.ibachat.model.ThreadModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
@@ -27,7 +27,6 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
@@ -122,7 +121,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeDatabase(String emailOfFriend, String threadID) {
         DatabaseReference databaseReference
-                = FirebaseDatabase.getInstance().getReference();
+                = DatabaseUtil.getDatabase().getReference();
 
         DatabaseReference currentThreadReference
                 = databaseReference.child("threads").child(threadID);

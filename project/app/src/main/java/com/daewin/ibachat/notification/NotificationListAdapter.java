@@ -6,15 +6,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.NotificationListItemBinding;
+import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.model.UserRequestModel;
 import com.daewin.ibachat.user.User;
-import com.daewin.ibachat.model.UserModel;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Comparator;
 
@@ -40,7 +38,7 @@ public class NotificationListAdapter extends SortedListAdapter<UserRequestModel>
 
 
     private void initializeDatabaseReferences() {
-        mUserDatabase = FirebaseDatabase.getInstance().getReference().child("users");
+        mUserDatabase = DatabaseUtil.getDatabase().getReference().child("users");
 
             UserModel currentUser = User.getCurrentUserModel();
 
