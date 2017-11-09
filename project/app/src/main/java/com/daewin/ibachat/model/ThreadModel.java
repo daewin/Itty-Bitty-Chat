@@ -50,7 +50,7 @@ public class ThreadModel implements SortedListAdapter.ViewModel {
             Long timeA = a.timestamp;
             Long timeB = b.timestamp;
 
-            return timeA.compareTo(timeB);
+            return timeB.compareTo(timeA);
         }
     };
 
