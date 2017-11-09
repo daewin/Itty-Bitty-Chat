@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.ChatReceivedItemBinding;
 import com.daewin.ibachat.databinding.ChatSentItemBinding;
 import com.daewin.ibachat.model.MessageModel;
@@ -13,7 +14,6 @@ import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
         this.messages = messages;
 
         DatabaseReference databaseReference
-                = FirebaseDatabase.getInstance().getReference();
+                = DatabaseUtil.getDatabase().getReference();
 
         threadMessagesReference
                 = databaseReference.child("thread_messages").child(threadID);

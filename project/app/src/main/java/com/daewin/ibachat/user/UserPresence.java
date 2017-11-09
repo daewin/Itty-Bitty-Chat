@@ -2,13 +2,10 @@ package com.daewin.ibachat.user;
 
 import android.util.Log;
 
-import com.daewin.ibachat.model.UserModel;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
@@ -23,7 +20,7 @@ import static com.daewin.ibachat.user.User.getCurrentUsersEncodedEmail;
 
 public class UserPresence {
 
-    public static DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    public static DatabaseReference database = DatabaseUtil.getDatabase().getReference();
     public static DatabaseReference connectedReference = database.child(".info/connected");
 
 

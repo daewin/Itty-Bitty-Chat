@@ -7,17 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.FindFriendListItemBinding;
-import com.daewin.ibachat.user.User;
 import com.daewin.ibachat.model.UserModel;
+import com.daewin.ibachat.user.User;
 import com.github.wrdlbrnft.modularadapter.ModularAdapter;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
@@ -50,7 +48,7 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
     }
 
     private void initializeDatabaseReferences() {
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabase = DatabaseUtil.getDatabase().getReference();
         UserModel currentUser = User.getCurrentUserModel();
 
         if (currentUser != null) {

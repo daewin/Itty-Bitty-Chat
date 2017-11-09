@@ -11,8 +11,6 @@ import com.daewin.ibachat.databinding.ChatLandingItemBinding;
 import com.daewin.ibachat.model.ThreadModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Comparator;
 
@@ -21,13 +19,10 @@ import java.util.Comparator;
 
 public class ChatLandingListAdapter extends SortedListAdapter<ThreadModel> {
 
-    private DatabaseReference mDatabase;
-
     ChatLandingListAdapter(@NonNull Context context,
                            @NonNull Class<ThreadModel> aClass,
                            @NonNull Comparator<ThreadModel> comparator) {
         super(context, aClass, comparator);
-        mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     @NonNull

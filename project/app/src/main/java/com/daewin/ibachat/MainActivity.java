@@ -13,9 +13,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import com.daewin.ibachat.chat.ChatLandingActivity;
+import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.MainActivityBinding;
 import com.daewin.ibachat.user.User;
 import com.firebase.ui.auth.AuthUI;
@@ -36,6 +36,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
+    private static final String PERSISTENCE_STATE = "persistence_state";
+    private static final String PERSISTENCE_STATE_SET = "persistence_state_set";
 
     private MainActivityBinding binding;
 
@@ -59,6 +61,23 @@ public class MainActivity extends AppCompatActivity {
                     startLoginActivity();
                 }
             });
+        }
+    }
+
+    private void setDatabasePersistenceOnColdLaunch() {
+        // Shared Preferences for persistence state
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        // Obtain the persistence state
+        String persistenceState = preferences.getString(PERSISTENCE_STATE, "");
+
+        if (!persistenceState.equals(PERSISTENCE_STATE_SET)) {
+
+            DatabaseUtil.getDatabase().setPersistenceEnabled(true);
+
+            editor.putString(PERSISTENCE_STATE, PERSISTENCE_STATE_SET);
+            editor.apply();
         }
     }
 
