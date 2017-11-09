@@ -8,6 +8,7 @@ import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -90,13 +91,18 @@ public class FindFriendActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
 
         // Use a linear layout manager
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(layoutManager);
 
         // Specify our adapter
         mFindFriendListAdapter = new FindFriendListAdapter
                 (this, UserModel.class, UserModel.alphabeticalComparator);
 
         mRecyclerView.setAdapter(mFindFriendListAdapter);
+
+        mRecyclerView.addItemDecoration
+                (new DividerItemDecoration(mRecyclerView.getContext(),
+                        layoutManager.getOrientation()));
     }
 
     private void initializeSearchView() {

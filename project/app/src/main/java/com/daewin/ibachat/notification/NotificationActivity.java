@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -89,13 +90,18 @@ public class NotificationActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
 
         // Use a linear layout manager
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(layoutManager);
 
         // Specify our adapter
         mNotificationListAdapter = new NotificationListAdapter
                 (this, UserRequestModel.class, UserRequestModel.timeComparator);
 
         mRecyclerView.setAdapter(mNotificationListAdapter);
+
+        mRecyclerView.addItemDecoration
+                (new DividerItemDecoration(mRecyclerView.getContext(),
+                        layoutManager.getOrientation()));
     }
 
     private void initializeDetailedNotifications() {
