@@ -3,7 +3,8 @@
 A simple chat application inspired by WhatsApp but with the ability to login with your own social media handle. 
 
 ### Features
-- Easy sign up using your Google, Facebook, and Twitter account along with a basic email option. 
+- Easy sign up using your Google, Facebook, and Twitter account along with a basic email option.
+- Smart Lock for Passwords
 - Friend lookup via email
 - Notifications feature (friend requests as of now)
 - Presence feature to let your friend know if you're online, or if not, the time you were last seen (WhatsApp-esque)
@@ -21,3 +22,4 @@ A simple chat application inspired by WhatsApp but with the ability to login wit
 
 ### Compilation Notes
 - Import the project into Android Studio as usual, but you'll need to set-up your machine's hash-keys for Firebase interaction. Android Studio automatically generates this for us in the Firebase Assistant (Tools -> Firebase -> Authentication -> Connect your app to Firebase)
+- If there are any authentication issues, check out the Firebase UI readme: https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md 
