@@ -3,6 +3,7 @@ package com.daewin.ibachat.chat;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -45,11 +46,14 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     private DatabaseReference mRequestsReceivedReference;
     private DatabaseReference mUserThreadsReference;
-    private Menu mToolbarMenu;
-    private RecyclerView mRecyclerView;
+
     private ValueEventListener mNotificationsListener;
     private ValueEventListener mUserThreadsListener;
+
+    private Menu mToolbarMenu;
+    private RecyclerView mRecyclerView;
     private ChatLandingActivityBinding binding;
+
     private ChatLandingListAdapter chatLandingListAdapter;
 
     @NonNull
@@ -72,9 +76,6 @@ public class ChatLandingActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.myToolbar);
 
-        initializeDatabaseReferences();
-        initializeRecyclerView();
-
         binding.mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -82,29 +83,31 @@ public class ChatLandingActivity extends AppCompatActivity {
             }
         });
 
-        binding.chatLandingProgressBar.setVisibility(View.VISIBLE);
+        initializeDatabaseReferences();
+        initializeRecyclerView();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
         initializeUserThreads();
         initializeNotifications();
     }
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
         if (mNotificationsListener != null) {
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
 
-        if(mUserThreadsListener != null){
+        if (mUserThreadsListener != null) {
             mUserThreadsReference.removeEventListener(mUserThreadsListener);
         }
-
-        mUserThreadsReference.keepSynced(false);
-        super.onDestroy();
     }
 
     private void initializeDatabaseReferences() {
         DatabaseReference mDatabase = DatabaseUtil.getDatabase().getReference();
-
         UserModel currentUser = User.getCurrentUserModel();
 
         if (currentUser != null) {
@@ -118,8 +121,6 @@ public class ChatLandingActivity extends AppCompatActivity {
             mUserThreadsReference = mDatabase.child("users")
                     .child(mCurrentUsersEncodedEmail)
                     .child("user_threads_with");
-
-            mUserThreadsReference.keepSynced(true);
         }
     }
 
@@ -139,23 +140,23 @@ public class ChatLandingActivity extends AppCompatActivity {
 
         mRecyclerView.addItemDecoration
                 (new DividerItemDecoration(mRecyclerView.getContext(),
-                mLayoutManager.getOrientation()));
+                        mLayoutManager.getOrientation()));
     }
 
 
-    private void initializeUserThreads(){
+    private void initializeUserThreads() {
+
+        binding.chatLandingProgressBar.setVisibility(View.VISIBLE);
 
         mUserThreadsListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-
                 ArrayList<ThreadModel> threadModels = new ArrayList<>();
 
-                for(DataSnapshot threads : dataSnapshot.getChildren()){
-
+                for (DataSnapshot threads : dataSnapshot.getChildren()) {
                     ThreadModel thread = threads.getValue(ThreadModel.class);
 
-                    if(thread != null && thread.getTimestamp() != null){
+                    if (thread != null && thread.getTimestamp() != null) {
                         // We only get threads that have any chat activity
                         thread.setEmail(threads.getKey());
                         threadModels.add(thread);
@@ -163,6 +164,13 @@ public class ChatLandingActivity extends AppCompatActivity {
                 }
 
                 binding.chatLandingProgressBar.setVisibility(View.INVISIBLE);
+
+                if(threadModels.size() == 0){
+                    binding.noChatsTextView.setVisibility(View.VISIBLE);
+                } else {
+                    binding.noChatsTextView.setVisibility(View.INVISIBLE);
+                }
+
                 updateAdapterList(threadModels);
             }
 
@@ -197,16 +205,25 @@ public class ChatLandingActivity extends AppCompatActivity {
         mRequestsReceivedReference.addValueEventListener(mNotificationsListener);
     }
 
-    private MenuItem getNotificationMenuItem() {
-        return mToolbarMenu.findItem(R.id.action_notifications);
-    }
-
     private void setNotificationIcon(int drawable) {
         // Check if the current notification icon has already been set, else set it.
-        if (!(getNotificationMenuItem().getIcon()
-                .equals(ContextCompat.getDrawable(getApplicationContext(), drawable)))) {
+        MenuItem menuItem = getNotificationMenuItem();
 
-            getNotificationMenuItem().setIcon(drawable);
+        if (menuItem != null) {
+            Drawable potentialIcon = ContextCompat.getDrawable(getApplicationContext(), drawable);
+
+            if (!menuItem.getIcon().equals(potentialIcon)) {
+                getNotificationMenuItem().setIcon(drawable);
+            }
+        }
+    }
+
+    @Nullable
+    private MenuItem getNotificationMenuItem() {
+        if (mToolbarMenu != null) {
+            return mToolbarMenu.findItem(R.id.action_notifications);
+        } else {
+            return null;
         }
     }
 
