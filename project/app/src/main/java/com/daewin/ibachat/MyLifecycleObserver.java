@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 
 import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.user.UserPresence;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,26 +20,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MyLifecycleObserver implements DefaultLifecycleObserver {
 
     private static AtomicInteger numberOfActivities = new AtomicInteger();
-    private static ValueEventListener mUserPresenceListener;
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
 
-        if(numberOfActivities.incrementAndGet() == 1){
+        if (numberOfActivities.incrementAndGet() == 1) {
             DatabaseUtil.getDatabase().goOnline();
-            mUserPresenceListener = UserPresence.establishUserPresence();
+
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                UserPresence.getInstance().establishUserPresence();
+            }
         }
     }
 
     @Override
     public void onStop(@NonNull LifecycleOwner owner) {
 
-        if(numberOfActivities.decrementAndGet() == 0){
-            DatabaseUtil.getDatabase().goOffline();
-
-            if (mUserPresenceListener != null) {
-                UserPresence.connectedReference.removeEventListener(mUserPresenceListener);
+        if (numberOfActivities.decrementAndGet() == 0) {
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                UserPresence.getInstance().removeUserPresence();
             }
+
+            DatabaseUtil.getDatabase().goOffline();
         }
     }
 

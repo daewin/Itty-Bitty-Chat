@@ -12,7 +12,7 @@ import com.google.firebase.database.ValueEventListener;
 import static com.daewin.ibachat.user.User.getCurrentUsersEncodedEmail;
 
 /**
- * Helper function for user presence related functions
+ * Singleton for user presence related functions
  * <p>
  * Bulk of the code structure is based off:
  * https://firebase.google.com/docs/database/android/offline-capabilities#section-sample
@@ -20,43 +20,74 @@ import static com.daewin.ibachat.user.User.getCurrentUsersEncodedEmail;
 
 public class UserPresence {
 
-    public static DatabaseReference database = DatabaseUtil.getDatabase().getReference();
-    public static DatabaseReference connectedReference = database.child(".info/connected");
+    private static UserPresence ourInstance;
 
+    public static synchronized UserPresence getInstance() {
+        if (ourInstance == null) {
+            ourInstance = new UserPresence();
+        }
+        return ourInstance;
+    }
 
-    public static ValueEventListener establishUserPresence() {
+    public static synchronized void clearInstance() {
+        getInstance().removeUserPresence();
+        ourInstance = null;
+    }
 
-        // Since the user can connect from multiple devices, we store each connection instance
-        // separately. Any time the userConnectionsReference's value below is null (i.e. has
-        // no children), the user is offline.
+    private String currentUsersEncodedEmail;
+
+    private DatabaseReference userConnectionsReference;
+    private DatabaseReference currentUsersConnectedReference;
+    private DatabaseReference connectedReference;
+    private DatabaseReference lastOnlineReference;
+
+    private ValueEventListener currentUsersConnectedListener;
+
+    private UserPresence() {
         String encodedEmail = getCurrentUsersEncodedEmail();
 
-        if(encodedEmail != null) {
-            DatabaseReference usersDatabase
-                    = database.child("users").child(encodedEmail);
+        if (encodedEmail != null) {
+            currentUsersEncodedEmail = encodedEmail;
+            initializeDatabaseReferences();
+        }
+    }
 
-            final DatabaseReference userConnectionsReference = usersDatabase.child("connections");
+    private void initializeDatabaseReferences() {
+        DatabaseReference database = DatabaseUtil.getDatabase().getReference();
 
-            // Store the timestamp of the users last disconnect (i.e. last seen)
-            final DatabaseReference lastOnlineReference = usersDatabase.child("lastSeen");
+        connectedReference = database.child(".info/connected");
 
-            ValueEventListener connectedEventListener;
-            connectedEventListener = new ValueEventListener() {
+        DatabaseReference usersDatabase
+                = database.child("users").child(currentUsersEncodedEmail);
+
+        userConnectionsReference = usersDatabase.child("connections");
+
+        // Store the timestamp of the users last disconnect (i.e. last seen)
+        lastOnlineReference = usersDatabase.child("lastSeen");
+    }
+
+    // Since the user can connect from multiple devices, we store each connection instance
+    // separately. Any time the userConnectionsReference's value below is null (i.e. has
+    // no children), the user is offline.
+    public void establishUserPresence() {
+        if (currentUsersEncodedEmail != null) {
+
+            currentUsersConnectedListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Boolean connected = dataSnapshot.getValue(Boolean.class);
 
                     if (connected != null && connected) {
-                        DatabaseReference connectedReference = userConnectionsReference.push();
+                        currentUsersConnectedReference = userConnectionsReference.push();
 
                         // When this device disconnects, remove it from the connection list
-                        connectedReference.onDisconnect().removeValue();
+                        currentUsersConnectedReference.onDisconnect().removeValue();
 
                         // When this device disconnects, update the last seen value
                         lastOnlineReference.onDisconnect().setValue(ServerValue.TIMESTAMP);
 
                         // Add this device to my connections list
-                        connectedReference.setValue(true);
+                        currentUsersConnectedReference.setValue(true);
                     }
                 }
 
@@ -66,23 +97,25 @@ public class UserPresence {
                 }
             };
 
-            connectedReference.addValueEventListener(connectedEventListener);
-
-            return connectedEventListener;
+            connectedReference.addValueEventListener(currentUsersConnectedListener);
         }
-
-        return null;
     }
 
-    public static void removeUserPresence(){
-        String encodedEmail = getCurrentUsersEncodedEmail();
-
-        if(encodedEmail != null) {
-
-            DatabaseReference userConnectionsReference
-                    = database.child("users").child(encodedEmail).child("connections");
-
-            userConnectionsReference.removeValue();
+    public void removeUserPresence() {
+        if (currentUsersConnectedListener != null) {
+            connectedReference.removeEventListener(currentUsersConnectedListener);
         }
+    }
+
+    public void forceRemoveCurrentConnection() {
+        if (currentUsersConnectedReference != null) {
+            currentUsersConnectedReference.removeValue();
+        }
+
+        if (lastOnlineReference != null) {
+            lastOnlineReference.setValue(ServerValue.TIMESTAMP);
+        }
+
+
     }
 }
