@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
+ * Interaction via messages between two people. Only handles basic text for now.
  */
 
 public class ChatActivity extends AppCompatActivity {
@@ -41,30 +42,32 @@ public class ChatActivity extends AppCompatActivity {
     public static final String ARG_NAME_OF_FRIEND = "NAME_OF_FRIEND";
     public static final String ARG_EMAIL_OF_FRIEND = "EMAIL_OF_FRIEND";
     public static final String ARG_CURRENT_THREAD_ID = "CURRENT_THREAD_ID";
-    private static final int THREAD_MESSAGES_LIMIT = 50;
 
     // Database references
-    private DatabaseReference statusOfFriendReference;
-    private DatabaseReference typingStateOfFriendReference;
-    private DatabaseReference typingStateOfUserReference;
-    private DatabaseReference lastSeenOfFriendReference;
-    private DatabaseReference threadMessagesReference;
-    private DatabaseReference friendsThreadReference;
-    private DatabaseReference usersThreadReference;
+    private DatabaseReference mStatusOfFriendReference;
+    private DatabaseReference mTypingStateOfFriendReference;
+    private DatabaseReference mTypingStateOfUserReference;
+    private DatabaseReference mLastSeenOfFriendReference;
+    private DatabaseReference mThreadMessagesReference;
+    private DatabaseReference mFriendsThreadReference;
+    private DatabaseReference mUsersThreadReference;
 
     // Listeners
-    private ValueEventListener statusOfFriendListener;
-    private ValueEventListener typingStateOfFriendListener;
-    private ChildEventListener threadMessagesListener;
+    private ValueEventListener mStatusOfFriendListener;
+    private ValueEventListener mTypingStateOfFriendListener;
+    private ChildEventListener mThreadMessagesListener;
 
+    // Views
     private ChatActivityBinding binding;
-    private TextView statusTextView;
-    private ArrayList<MessageModel> messages;
-    private ChatListAdapter chatListAdapter;
-    private Query threadMessagesQuery;
+    private TextView mStatusTextView;
     private RecyclerView mRecyclerView;
-    private UserModel currentUser;
-    private boolean friendsStatusSet;
+
+    private ArrayList<MessageModel> messages;
+    private ChatListAdapter mChatListAdapter;
+    private Query mThreadMessagesQuery;
+    private UserModel mCurrentUser;
+    private boolean mFriendsStatusSet;
+    private boolean mIsTyping;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,7 +87,7 @@ public class ChatActivity extends AppCompatActivity {
         initializeActionBar(nameOfFriend);
         initializeRecyclerView(threadID);
         initializeTypingState();
-        initializeSendButtonBehaviour(threadID);
+        initializeSendButtonBehaviour();
     }
 
     @Override
@@ -92,7 +95,8 @@ public class ChatActivity extends AppCompatActivity {
         super.onStart();
         initializeStatusOfFriendListener();
         initializeThreadMessagesEventListener();
-        friendsStatusSet = false;
+        mFriendsStatusSet = false;
+        mIsTyping = false;
     }
 
     @Override
@@ -104,19 +108,19 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (statusOfFriendListener != null) {
-            statusOfFriendReference.removeEventListener(statusOfFriendListener);
+        if (mStatusOfFriendListener != null) {
+            mStatusOfFriendReference.removeEventListener(mStatusOfFriendListener);
         }
 
-        if (typingStateOfFriendListener != null) {
-            typingStateOfFriendReference.removeEventListener(typingStateOfFriendListener);
+        if (mTypingStateOfFriendListener != null) {
+            mTypingStateOfFriendReference.removeEventListener(mTypingStateOfFriendListener);
         }
 
-        if (threadMessagesListener != null) {
-            threadMessagesReference.removeEventListener(threadMessagesListener);
+        if (mThreadMessagesListener != null) {
+            mThreadMessagesReference.removeEventListener(mThreadMessagesListener);
         }
 
-        threadMessagesQuery.keepSynced(false);
+        mThreadMessagesQuery.keepSynced(false);
     }
 
     private void initializeDatabase(String emailOfFriend, String threadID) {
@@ -126,51 +130,52 @@ public class ChatActivity extends AppCompatActivity {
         DatabaseReference currentThreadReference
                 = databaseReference.child("threads").child(threadID);
 
-
         String encodedEmailOfFriend
                 = User.getEncodedEmail(emailOfFriend);
 
-        currentUser = User.getCurrentUserModel();
+        mCurrentUser = User.getCurrentUserModel();
 
-        if (currentUser != null) {
-            String currentUsersEncodedEmail = currentUser.getEncodedEmail();
+        if (mCurrentUser != null) {
+            String currentUsersEncodedEmail = mCurrentUser.getEncodedEmail();
 
             // Friend reference initialization
-            typingStateOfFriendReference
+            mTypingStateOfFriendReference
                     = currentThreadReference.child("members")
                     .child(encodedEmailOfFriend)
                     .child("is_typing");
 
-            statusOfFriendReference
+            mStatusOfFriendReference
                     = databaseReference.child("users")
                     .child(encodedEmailOfFriend)
                     .child("connections");
 
-            lastSeenOfFriendReference
+            mLastSeenOfFriendReference
                     = databaseReference.child("users")
                     .child(encodedEmailOfFriend)
                     .child("lastSeen");
 
-            friendsThreadReference = databaseReference.child("users")
+            mFriendsThreadReference = databaseReference.child("users")
                     .child(encodedEmailOfFriend)
                     .child("user_threads_with")
                     .child(currentUsersEncodedEmail);
 
             // Current user reference initialization
-            typingStateOfUserReference
+            mTypingStateOfUserReference
                     = currentThreadReference.child("members")
                     .child(currentUsersEncodedEmail)
                     .child("is_typing");
 
-            usersThreadReference = databaseReference.child("users")
+            mUsersThreadReference
+                    = databaseReference.child("users")
                     .child(currentUsersEncodedEmail)
                     .child("user_threads_with")
                     .child(encodedEmailOfFriend);
         }
 
         // Thread messages reference initialization
-        threadMessagesReference
-                = databaseReference.child("thread_messages").child(threadID);
+        mThreadMessagesReference
+                = databaseReference.child("thread_messages")
+                .child(threadID);
     }
 
     private void initializeActionBar(String nameOfFriend) {
@@ -186,7 +191,7 @@ public class ChatActivity extends AppCompatActivity {
             View customActionBar = actionBar.getCustomView();
 
             TextView nameTextView = customActionBar.findViewById(R.id.nameTextView);
-            statusTextView = customActionBar.findViewById(R.id.statusTextView);
+            mStatusTextView = customActionBar.findViewById(R.id.statusTextView);
 
             nameTextView.setText(nameOfFriend);
         }
@@ -197,8 +202,8 @@ public class ChatActivity extends AppCompatActivity {
         messages = new ArrayList<>();
 
         // Specify our adapter
-        chatListAdapter = new ChatListAdapter(messages, threadID);
-        mRecyclerView.setAdapter(chatListAdapter);
+        mChatListAdapter = new ChatListAdapter(messages, threadID);
+        mRecyclerView.setAdapter(mChatListAdapter);
         mRecyclerView.setHasFixedSize(true);
 
         // Use a linear layout manager
@@ -206,26 +211,6 @@ public class ChatActivity extends AppCompatActivity {
         mLayoutManager.setReverseLayout(true);
 
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-        // To allow endless scrolling (not working atm.)
-        //mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-        //
-        //    @Override
-        //    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-        //        int lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition();
-        //        int totalMessagesCount = mLayoutManager.getItemCount();
-        //
-        //        // Once we reach the top of the list, load more if any
-        //        if(moreMessagesToBeLoaded){
-        //            if ((lastVisibleItemPosition + 1 == totalMessagesCount)) {
-        //                System.err.println("Loading more..." + mThreadMessageLimit);
-        //                mThreadMessageLimit += THREAD_MESSAGES_LIMIT;
-        //                loadThreadMessages(mThreadMessageLimit);
-        //                moreMessagesToBeLoaded = false;
-        //            }
-        //        }
-        //    }
-        //});
     }
 
     private void initializeTypingState() {
@@ -255,10 +240,15 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void setTypingState(boolean isTyping) {
-        typingStateOfUserReference.setValue(isTyping);
+        // Check if the current typing state is the same as the calling function's typing state,
+        // to reduce wasted data usage.
+        if(mIsTyping != isTyping){
+            mTypingStateOfUserReference.setValue(isTyping);
+            mIsTyping = isTyping;
+        }
     }
 
-    private void initializeSendButtonBehaviour(final String threadID) {
+    private void initializeSendButtonBehaviour() {
 
         binding.chatSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -266,7 +256,7 @@ public class ChatActivity extends AppCompatActivity {
                 String message = binding.chatMessageArea.getText().toString();
 
                 if (!message.isEmpty()) {
-                    String email = currentUser.getEmail();
+                    String email = mCurrentUser.getEmail();
                     Long timestamp = System.currentTimeMillis();
 
                     final MessageModel messageModel
@@ -279,51 +269,51 @@ public class ChatActivity extends AppCompatActivity {
                     // According to the docs, sorting a nearly-sorted list (this as it builds up)
                     // requires only n comparisons, which is acceptable.
                     Collections.sort(messages, MessageModel.timeComparator);
-                    chatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
+                    mChatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
                     mRecyclerView.smoothScrollToPosition(0);
 
                     // Do this after adding locally to avoid double messages
-                    threadMessagesReference.push().setValue(messageModel);
+                    mThreadMessagesReference.push().setValue(messageModel);
 
                     binding.chatMessageArea.setText("");
 
                     // Push the message and timestamp to both the user's thread nodes
-                    friendsThreadReference.child("lastMessage").setValue(message);
-                    friendsThreadReference.child("timestamp").setValue(timestamp);
+                    mFriendsThreadReference.child("lastMessage").setValue(message);
+                    mFriendsThreadReference.child("timestamp").setValue(timestamp);
 
-                    usersThreadReference.child("lastMessage").setValue(message);
-                    usersThreadReference.child("timestamp").setValue(timestamp);
+                    mUsersThreadReference.child("lastMessage").setValue(message);
+                    mUsersThreadReference.child("timestamp").setValue(timestamp);
                 }
             }
         });
     }
 
     private void initializeStatusOfFriendListener() {
-        statusOfFriendListener = new ValueEventListener() {
+        mStatusOfFriendListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 if (dataSnapshot.exists()) {
-                    if (!friendsStatusSet) {
+                    if (!mFriendsStatusSet) {
                         // Since a user can have multiple devices, we only set it to online for
                         // the first "online" status update. This is to prevent multiple listeners
                         // set for the typing activity.
-                        statusTextView.setText(R.string.user_online);
+                        mStatusTextView.setText(R.string.user_online);
 
                         // Initialize listener for their typing activity
                         initializeTypingStateOfFriendListener();
 
-                        friendsStatusSet = true;
+                        mFriendsStatusSet = true;
                     }
                 } else {
                     // Friend is offline, so we remove the typing activity listener
-                    if (typingStateOfFriendListener != null) {
-                        typingStateOfFriendReference
-                                .removeEventListener(typingStateOfFriendListener);
+                    if (mTypingStateOfFriendListener != null) {
+                        mTypingStateOfFriendReference
+                                .removeEventListener(mTypingStateOfFriendListener);
                     }
 
                     setLastSeenOfFriend();
-                    friendsStatusSet = false;
+                    mFriendsStatusSet = false;
                 }
             }
 
@@ -333,11 +323,11 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        statusOfFriendReference.addValueEventListener(statusOfFriendListener);
+        mStatusOfFriendReference.addValueEventListener(mStatusOfFriendListener);
     }
 
     private void initializeTypingStateOfFriendListener() {
-        typingStateOfFriendListener = new ValueEventListener() {
+        mTypingStateOfFriendListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -345,11 +335,11 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (isTyping != null) {
                     if (isTyping) {
-                        statusTextView.setText(R.string.is_typing);
+                        mStatusTextView.setText(R.string.is_typing);
                     } else {
                         // We assume that if a client had sent a "false" value for isTyping,
                         // and this listener was triggered, they'd still be online to do so.
-                        statusTextView.setText(R.string.user_online);
+                        mStatusTextView.setText(R.string.user_online);
                     }
                 }
             }
@@ -360,11 +350,11 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        typingStateOfFriendReference.addValueEventListener(typingStateOfFriendListener);
+        mTypingStateOfFriendReference.addValueEventListener(mTypingStateOfFriendListener);
     }
 
     private void setLastSeenOfFriend() {
-        lastSeenOfFriendReference.addListenerForSingleValueEvent(new ValueEventListener() {
+        mLastSeenOfFriendReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -376,24 +366,24 @@ public class ChatActivity extends AppCompatActivity {
 
                     switch (interpretation) {
                         case TimestampInterpreter.TODAY:
-                            statusTextView
+                            mStatusTextView
                                     .setText(String.format("Last seen today at %s",
                                             interpreter.getTime()));
                             break;
                         case TimestampInterpreter.YESTERDAY:
-                            statusTextView
+                            mStatusTextView
                                     .setText(String.format("Last seen yesterday at %s",
                                             interpreter.getTime()));
                             break;
                         default:
-                            statusTextView
+                            mStatusTextView
                                     .setText(String.format("Last seen: %s",
                                             interpreter.getFullDate()));
                             break;
                     }
 
                 } else {
-                    statusTextView.setText(R.string.user_inactive);
+                    mStatusTextView.setText(R.string.user_inactive);
                 }
             }
 
@@ -405,22 +395,15 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeThreadMessagesEventListener() {
-
-        loadThreadMessages();
-    }
-
-    private void loadThreadMessages() {
-
-        if (threadMessagesListener != null) {
+        if (mThreadMessagesListener != null) {
             // Detach the old listener if it exists
-            threadMessagesQuery.keepSynced(false);
-            threadMessagesQuery.removeEventListener(threadMessagesListener);
+            mThreadMessagesQuery.keepSynced(false);
+            mThreadMessagesQuery.removeEventListener(mThreadMessagesListener);
         }
 
-        //threadMessagesQuery = threadMessagesReference.limitToFirst(threadMessageLimit);
-        threadMessagesQuery = threadMessagesReference;
+        mThreadMessagesQuery = mThreadMessagesReference;
 
-        threadMessagesListener = new ChildEventListener() {
+        mThreadMessagesListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
@@ -441,7 +424,7 @@ public class ChatActivity extends AppCompatActivity {
                         // We set the message ID, but we don't have to notify to avoid unnecessary
                         // layout redraws. Any changes will be handled in onChildChanged
                         storedMessage.setMessageID(incomingMessage.getMessageID());
-                        chatListAdapter.notifyItemChanged(storedMessageIndex);
+                        mChatListAdapter.notifyItemChanged(storedMessageIndex);
                         return;
                     }
 
@@ -450,7 +433,7 @@ public class ChatActivity extends AppCompatActivity {
                     // According to the docs, sorting a nearly-sorted list (this as it builds up)
                     // requires only n comparisons, which is acceptable.
                     Collections.sort(messages, MessageModel.timeComparator);
-                    chatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
+                    mChatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
 
                     mRecyclerView.smoothScrollToPosition(0);
                 }
@@ -467,7 +450,7 @@ public class ChatActivity extends AppCompatActivity {
                         MessageModel storedMessage = messages.get(storedMessageIndex);
 
                         storedMessage.setSeen(incomingMessage.isSeen());
-                        chatListAdapter.notifyItemChanged(storedMessageIndex);
+                        mChatListAdapter.notifyItemChanged(storedMessageIndex);
                     }
                 }
             }
@@ -479,7 +462,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                // Shouldn't happen
+                // Ordering changes shouldn't happen
             }
 
             @Override
@@ -490,8 +473,8 @@ public class ChatActivity extends AppCompatActivity {
 
         // Firebase has been set to cache the Queries, so that future calls would not
         // have to reload the same messages (hopefully)
-        threadMessagesQuery.keepSynced(true);
-        threadMessagesQuery.addChildEventListener(threadMessagesListener);
+        mThreadMessagesQuery.keepSynced(true);
+        mThreadMessagesQuery.addChildEventListener(mThreadMessagesListener);
     }
 
     @Override

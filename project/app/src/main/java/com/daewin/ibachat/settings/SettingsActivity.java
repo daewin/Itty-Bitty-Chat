@@ -43,7 +43,8 @@ public class SettingsActivity extends AppCompatActivity {
         binding.logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                UserPresence.removeUserPresence();
+                UserPresence.getInstance().forceRemoveCurrentConnection();
+                UserPresence.clearInstance();
 
                 AuthUI.getInstance()
                         .signOut(SettingsActivity.this)

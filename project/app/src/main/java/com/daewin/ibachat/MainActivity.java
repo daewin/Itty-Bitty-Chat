@@ -1,10 +1,8 @@
 package com.daewin.ibachat;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,7 +13,6 @@ import android.util.Log;
 import android.view.View;
 
 import com.daewin.ibachat.chat.ChatLandingActivity;
-import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.MainActivityBinding;
 import com.daewin.ibachat.user.User;
 import com.firebase.ui.auth.AuthUI;
@@ -36,8 +33,6 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
-    private static final String PERSISTENCE_STATE = "persistence_state";
-    private static final String PERSISTENCE_STATE_SET = "persistence_state_set";
 
     private MainActivityBinding binding;
 
@@ -47,7 +42,11 @@ public class MainActivity extends AppCompatActivity {
         getLifecycle().addObserver(new MyLifecycleObserver());
 
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
         // Go straight to the chat landing activity or show the login screen
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -61,23 +60,6 @@ public class MainActivity extends AppCompatActivity {
                     startLoginActivity();
                 }
             });
-        }
-    }
-
-    private void setDatabasePersistenceOnColdLaunch() {
-        // Shared Preferences for persistence state
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = preferences.edit();
-
-        // Obtain the persistence state
-        String persistenceState = preferences.getString(PERSISTENCE_STATE, "");
-
-        if (!persistenceState.equals(PERSISTENCE_STATE_SET)) {
-
-            DatabaseUtil.getDatabase().setPersistenceEnabled(true);
-
-            editor.putString(PERSISTENCE_STATE, PERSISTENCE_STATE_SET);
-            editor.apply();
         }
     }
 

@@ -36,4 +36,5 @@
     <string name="is_typing">typing&#8230;</string>
     <string name="user_online">online</string>
     <string name="user_inactive">inactive</string>
+    <string name="no_active_chats">You have no active chats!</string>
 </resources>
