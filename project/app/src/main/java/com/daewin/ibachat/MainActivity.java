@@ -1,8 +1,10 @@
 package com.daewin.ibachat;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -33,8 +35,12 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
+    private static final String PENDING_STATE = "pending";
+    private static final String PREFERENCES_NAME = "state";
 
     private MainActivityBinding binding;
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -42,11 +48,36 @@ public class MainActivity extends AppCompatActivity {
         getLifecycle().addObserver(new MyLifecycleObserver());
 
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
+
+        // Shared Preferences for sign-in state
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = preferences.edit();
+
+        // Obtain the sign-in state (if available) from the Application's database
+        String stateSharedPreferences = preferences.getString(PREFERENCES_NAME, "");
+
+        if(stateSharedPreferences.equals(PENDING_STATE)){
+            // This handles the case where the user exits halfway through the external sign-in flow,
+            // and restarts the app. We just reset it.
+            editor.remove(PREFERENCES_NAME);
+            editor.apply();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        // Obtain the sign-in state (if available) from the Application's database
+        String stateSharedPreferences = preferences.getString(PREFERENCES_NAME, "");
+
+        if(stateSharedPreferences.equals(PENDING_STATE)){
+            // This handles the case where the external sign-in flow (later on) returns and onStart
+            // gets called, the user would have already been signed in, thus, the User Index would
+            // not be created.
+            return;
+        }
+
         // Go straight to the chat landing activity or show the login screen
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -57,6 +88,10 @@ public class MainActivity extends AppCompatActivity {
             binding.logoImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    // Set the state to "pending"
+                    editor.putString(PREFERENCES_NAME, PENDING_STATE);
+                    editor.apply();
+
                     startLoginActivity();
                 }
             });
@@ -88,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // Remove the "pending" state
+        editor.remove(PREFERENCES_NAME);
+        editor.apply();
+
         if (requestCode == RC_SIGN_IN) {
             handleSignInResponse(resultCode, data);
             return;
@@ -102,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Successfully signed in
         if (resultCode == RESULT_OK) {
-
             binding.loginProgressBar.setVisibility(View.VISIBLE);
             binding.loginIndicatorTextView.setVisibility(View.GONE);
 
@@ -111,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
             if (currentUser != null) {
                 // If the user has just registered, create a task to inform us when the
                 // database information has been created successfully (or unsuccessfully)
-
                 User.createUserDatabaseIfMissing()
                         .addOnSuccessListener(new OnSuccessListener<Boolean>() {
 
