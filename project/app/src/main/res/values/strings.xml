@@ -24,7 +24,7 @@
     <!-- Toolbar related strings -->
     <string name="action_notifications">Notifications</string>
     <string name="action_add_friend">Add a friend</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_logout">Logout</string>
 
     <!-- Strings related to notifications -->
     <string name="accept_request">Accept</string>

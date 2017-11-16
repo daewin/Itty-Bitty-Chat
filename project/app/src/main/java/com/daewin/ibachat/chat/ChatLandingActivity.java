@@ -1,6 +1,8 @@
 package com.daewin.ibachat.chat;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.drawable.Drawable;
@@ -17,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.daewin.ibachat.MainActivity;
 import com.daewin.ibachat.MyLifecycleObserver;
 import com.daewin.ibachat.R;
 import com.daewin.ibachat.database.DatabaseUtil;
@@ -25,9 +28,12 @@ import com.daewin.ibachat.friends.FindFriendActivity;
 import com.daewin.ibachat.model.ThreadModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.notification.NotificationActivity;
-import com.daewin.ibachat.settings.SettingsActivity;
 import com.daewin.ibachat.user.User;
+import com.daewin.ibachat.user.UserPresence;
+import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -238,18 +244,15 @@ public class ChatLandingActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add_friend:
-
                 startActivity(new Intent(this, FindFriendActivity.class));
                 return true;
 
             case R.id.action_notifications:
-
                 startActivity(new Intent(this, NotificationActivity.class));
                 return true;
 
-            case R.id.action_settings:
-
-                startActivity(new Intent(this, SettingsActivity.class));
+            case R.id.action_logout:
+                showLogoutConfirmationDialog();
                 return true;
 
             default:
@@ -257,6 +260,45 @@ public class ChatLandingActivity extends AppCompatActivity {
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void showLogoutConfirmationDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        logout();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void logout(){
+        UserPresence.getInstance().forceRemoveCurrentConnection();
+        UserPresence.clearInstance();
+
+        final Intent logoutIntent
+                = new Intent(ChatLandingActivity.this, MainActivity.class);
+
+        AuthUI.getInstance()
+                .signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+
+                    public void onComplete(@NonNull Task<Void> task) {
+                        // The user is now signed out
+                        startActivity(logoutIntent);
+                        finishAffinity();
+                    }
+                });
     }
 
     private void updateAdapterList(List<ThreadModel> threadModels) {
