@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFERENCES_NAME = "state";
 
     private MainActivityBinding binding;
+    private SharedPreferences preferences;
     private SharedPreferences.Editor editor;
 
     @Override
@@ -47,15 +48,25 @@ public class MainActivity extends AppCompatActivity {
         getLifecycle().addObserver(new MyLifecycleObserver());
 
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
+
+        // Shared Preferences for sign-in state
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = preferences.edit();
+
+        // Obtain the sign-in state (if available) from the Application's database
+        String stateSharedPreferences = preferences.getString(PREFERENCES_NAME, "");
+
+        if(stateSharedPreferences.equals(PENDING_STATE)){
+            // This handles the case where the user exits halfway through the external sign-in flow,
+            // and restarts the app. We just reset it.
+            editor.remove(PREFERENCES_NAME);
+            editor.apply();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        // Shared Preferences for sign-in state
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        editor = preferences.edit();
 
         // Obtain the sign-in state (if available) from the Application's database
         String stateSharedPreferences = preferences.getString(PREFERENCES_NAME, "");

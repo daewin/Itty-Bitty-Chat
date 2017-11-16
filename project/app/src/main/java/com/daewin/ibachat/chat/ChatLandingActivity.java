@@ -95,8 +95,8 @@ public class ChatLandingActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         if (mNotificationsListener != null) {
             mRequestsReceivedReference.removeEventListener(mNotificationsListener);
         }
