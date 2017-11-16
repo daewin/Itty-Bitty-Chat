@@ -64,7 +64,6 @@ public class ChatActivity extends AppCompatActivity {
 
     private ArrayList<MessageModel> messages;
     private ChatListAdapter mChatListAdapter;
-    private Query mThreadMessagesQuery;
     private UserModel mCurrentUser;
     private boolean mFriendsStatusSet;
     private boolean mIsTyping;
@@ -100,14 +99,10 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        setTypingState(false);
-    }
-
-    @Override
     protected void onStop() {
         super.onStop();
+        setTypingState(false);
+
         if (mStatusOfFriendListener != null) {
             mStatusOfFriendReference.removeEventListener(mStatusOfFriendListener);
         }
@@ -119,8 +114,6 @@ public class ChatActivity extends AppCompatActivity {
         if (mThreadMessagesListener != null) {
             mThreadMessagesReference.removeEventListener(mThreadMessagesListener);
         }
-
-        mThreadMessagesQuery.keepSynced(false);
     }
 
     private void initializeDatabase(String emailOfFriend, String threadID) {
@@ -289,66 +282,72 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeStatusOfFriendListener() {
-        mStatusOfFriendListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
 
-                if (dataSnapshot.exists()) {
-                    if (!mFriendsStatusSet) {
-                        // Since a user can have multiple devices, we only set it to online for
-                        // the first "online" status update. This is to prevent multiple listeners
-                        // set for the typing activity.
-                        mStatusTextView.setText(R.string.user_online);
+        if(mStatusOfFriendListener == null){
+            mStatusOfFriendListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
 
-                        // Initialize listener for their typing activity
-                        initializeTypingStateOfFriendListener();
+                    if (dataSnapshot.exists()) {
+                        if (!mFriendsStatusSet) {
+                            // Since a user can have multiple devices, we only set it to online for
+                            // the first "online" status update. This is to prevent multiple listeners
+                            // set for the typing activity.
+                            mStatusTextView.setText(R.string.user_online);
 
-                        mFriendsStatusSet = true;
+                            // Initialize listener for their typing activity
+                            initializeTypingStateOfFriendListener();
+
+                            mFriendsStatusSet = true;
+                        }
+                    } else {
+                        // Friend is offline, so we remove the typing activity listener
+                        if (mTypingStateOfFriendListener != null) {
+                            mTypingStateOfFriendReference
+                                    .removeEventListener(mTypingStateOfFriendListener);
+                        }
+
+                        setLastSeenOfFriend();
+                        mFriendsStatusSet = false;
                     }
-                } else {
-                    // Friend is offline, so we remove the typing activity listener
-                    if (mTypingStateOfFriendListener != null) {
-                        mTypingStateOfFriendReference
-                                .removeEventListener(mTypingStateOfFriendListener);
-                    }
-
-                    setLastSeenOfFriend();
-                    mFriendsStatusSet = false;
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.w("Error", databaseError.toException().getMessage());
-            }
-        };
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.w("Error", databaseError.toException().getMessage());
+                }
+            };
+        }
 
         mStatusOfFriendReference.addValueEventListener(mStatusOfFriendListener);
     }
 
     private void initializeTypingStateOfFriendListener() {
-        mTypingStateOfFriendListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
 
-                Boolean isTyping = dataSnapshot.getValue(Boolean.class);
+        if(mTypingStateOfFriendListener == null){
+            mTypingStateOfFriendListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
 
-                if (isTyping != null) {
-                    if (isTyping) {
-                        mStatusTextView.setText(R.string.is_typing);
-                    } else {
-                        // We assume that if a client had sent a "false" value for isTyping,
-                        // and this listener was triggered, they'd still be online to do so.
-                        mStatusTextView.setText(R.string.user_online);
+                    Boolean isTyping = dataSnapshot.getValue(Boolean.class);
+
+                    if (isTyping != null) {
+                        if (isTyping) {
+                            mStatusTextView.setText(R.string.is_typing);
+                        } else {
+                            // We assume that if a client had sent a "false" value for isTyping,
+                            // and this listener was triggered, they'd still be online to do so.
+                            mStatusTextView.setText(R.string.user_online);
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.w("Error", databaseError.toException().getMessage());
-            }
-        };
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.w("Error", databaseError.toException().getMessage());
+                }
+            };
+        }
 
         mTypingStateOfFriendReference.addValueEventListener(mTypingStateOfFriendListener);
     }
@@ -395,86 +394,77 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeThreadMessagesEventListener() {
-        if (mThreadMessagesListener != null) {
-            // Detach the old listener if it exists
-            mThreadMessagesQuery.keepSynced(false);
-            mThreadMessagesQuery.removeEventListener(mThreadMessagesListener);
+
+        if(mThreadMessagesListener == null) {
+            mThreadMessagesListener = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+                    MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
+
+                    if (incomingMessage != null) {
+                        // Since it's "live data", set the message ID to the push key
+                        incomingMessage.setMessageID(dataSnapshot.getKey());
+
+                        // To allow our local data to sync up properly, we check if the incoming
+                        // message is "equals" (based on the email, message and timestamp) to the
+                        // local message.
+                        if (messages.contains(incomingMessage)) {
+                            int storedMessageIndex = messages.indexOf(incomingMessage);
+                            MessageModel storedMessage = messages.get(storedMessageIndex);
+
+                            // We set the message ID, but we don't have to notify to avoid unnecessary
+                            // layout redraws. Any changes will be handled in onChildChanged
+                            storedMessage.setMessageID(incomingMessage.getMessageID());
+                            mChatListAdapter.notifyItemChanged(storedMessageIndex);
+                            return;
+                        }
+
+                        messages.add(incomingMessage);
+
+                        // According to the docs, sorting a nearly-sorted list (this as it builds up)
+                        // requires only n comparisons, which is acceptable.
+                        Collections.sort(messages, MessageModel.timeComparator);
+                        mChatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
+
+                        mRecyclerView.smoothScrollToPosition(0);
+                    }
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                    // Currently, only the "seen" status can be changed
+                    MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
+
+                    if (incomingMessage != null) {
+                        if (messages.contains(incomingMessage)) {
+                            int storedMessageIndex = messages.indexOf(incomingMessage);
+                            MessageModel storedMessage = messages.get(storedMessageIndex);
+
+                            storedMessage.setSeen(incomingMessage.isSeen());
+                            mChatListAdapter.notifyItemChanged(storedMessageIndex);
+                        }
+                    }
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    // Removing messages is not currently supported
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    // Ordering changes shouldn't happen
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.w("Error", databaseError.toException().getMessage());
+                }
+            };
         }
 
-        mThreadMessagesQuery = mThreadMessagesReference;
-
-        mThreadMessagesListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-                MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
-
-                if (incomingMessage != null) {
-
-                    // Since it's "live data", set the message ID to the push key
-                    incomingMessage.setMessageID(dataSnapshot.getKey());
-
-                    // To allow our local data to sync up properly, we check if the incoming
-                    // message is "equals" (based on the email, message and timestamp) to the
-                    // local message.
-                    if (messages.contains(incomingMessage)) {
-                        int storedMessageIndex = messages.indexOf(incomingMessage);
-                        MessageModel storedMessage = messages.get(storedMessageIndex);
-
-                        // We set the message ID, but we don't have to notify to avoid unnecessary
-                        // layout redraws. Any changes will be handled in onChildChanged
-                        storedMessage.setMessageID(incomingMessage.getMessageID());
-                        mChatListAdapter.notifyItemChanged(storedMessageIndex);
-                        return;
-                    }
-
-                    messages.add(incomingMessage);
-
-                    // According to the docs, sorting a nearly-sorted list (this as it builds up)
-                    // requires only n comparisons, which is acceptable.
-                    Collections.sort(messages, MessageModel.timeComparator);
-                    mChatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
-
-                    mRecyclerView.smoothScrollToPosition(0);
-                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                // Currently, only the "seen" status can be changed
-                MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
-
-                if (incomingMessage != null) {
-                    if (messages.contains(incomingMessage)) {
-                        int storedMessageIndex = messages.indexOf(incomingMessage);
-                        MessageModel storedMessage = messages.get(storedMessageIndex);
-
-                        storedMessage.setSeen(incomingMessage.isSeen());
-                        mChatListAdapter.notifyItemChanged(storedMessageIndex);
-                    }
-                }
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                // Removing messages is not currently supported
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                // Ordering changes shouldn't happen
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.w("Error", databaseError.toException().getMessage());
-            }
-        };
-
-        // Firebase has been set to cache the Queries, so that future calls would not
-        // have to reload the same messages (hopefully)
-        mThreadMessagesQuery.keepSynced(true);
-        mThreadMessagesQuery.addChildEventListener(mThreadMessagesListener);
+        mThreadMessagesReference.addChildEventListener(mThreadMessagesListener);
     }
 
     @Override

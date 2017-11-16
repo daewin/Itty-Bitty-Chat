@@ -13,7 +13,7 @@ public class TimestampInterpreter {
 
     public static final String TODAY = "today";
     public static final String YESTERDAY = "yesterday";
-    public static final String SOMEDAY = "someday";
+    private static final String SOMEDAY = "someday";
 
     private Long timestamp;
 
