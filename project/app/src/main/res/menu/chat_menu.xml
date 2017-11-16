@@ -14,9 +14,9 @@
         android:title="@string/action_add_friend"
         app:showAsAction="ifRoom" />
 
-    <!-- Settings, should always be in the overflow -->
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    <item
+        android:id="@+id/action_logout"
+        android:title="@string/action_logout"
         app:showAsAction="never"/>
 </menu>
 
