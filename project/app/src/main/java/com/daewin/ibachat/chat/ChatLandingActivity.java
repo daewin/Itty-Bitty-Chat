@@ -15,9 +15,11 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.daewin.ibachat.MainActivity;
 import com.daewin.ibachat.MyLifecycleObserver;
@@ -171,7 +173,7 @@ public class ChatLandingActivity extends AppCompatActivity {
 
                 binding.chatLandingProgressBar.setVisibility(View.INVISIBLE);
 
-                if(threadModels.size() == 0){
+                if (threadModels.size() == 0) {
                     binding.noChatsTextView.setVisibility(View.VISIBLE);
                 } else {
                     binding.noChatsTextView.setVisibility(View.INVISIBLE);
@@ -262,7 +264,7 @@ public class ChatLandingActivity extends AppCompatActivity {
         }
     }
 
-    private void showLogoutConfirmationDialog(){
+    private void showLogoutConfirmationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setMessage("Are you sure you want to logout?")
@@ -276,13 +278,10 @@ public class ChatLandingActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }
-                });
-
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+                }).show();
     }
 
-    private void logout(){
+    private void logout() {
         UserPresence.getInstance().forceRemoveCurrentConnection();
         UserPresence.clearInstance();
 
