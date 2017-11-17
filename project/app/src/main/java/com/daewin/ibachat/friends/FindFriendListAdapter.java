@@ -105,6 +105,10 @@ public class FindFriendListAdapter extends SortedListAdapter<UserModel> {
 
         @Override
         protected void performBind(@NonNull UserModel userModel) {
+            // Reset any previous changes to the buttons if recycled
+            binding.sendRequestButton.setVisibility(View.INVISIBLE);
+            binding.removeRequestButton.setVisibility(View.INVISIBLE);
+
             binding.setUser(userModel);
             binding.executePendingBindings();
 
