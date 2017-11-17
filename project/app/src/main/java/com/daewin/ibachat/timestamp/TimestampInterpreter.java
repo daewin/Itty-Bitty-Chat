@@ -1,5 +1,7 @@
 package com.daewin.ibachat.timestamp;
 
+import android.util.Log;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -65,7 +67,12 @@ public class TimestampInterpreter {
 
     private Calendar getTimestampCalendar() {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(timestamp);
+
+        if (timestamp != null) {
+            calendar.setTimeInMillis(timestamp);
+        } else {
+            Log.w("Error", "Timestamp is null");
+        }
 
         return calendar;
     }

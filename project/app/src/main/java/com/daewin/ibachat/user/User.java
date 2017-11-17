@@ -40,6 +40,17 @@ public class User {
     }
 
     @Nullable
+    public static String getCurrentUsersEmail() {
+
+        UserModel currentUser = getCurrentUserModel();
+
+        if (currentUser != null) {
+            return currentUser.getEmail();
+        }
+        return null;
+    }
+
+    @Nullable
     public static String getCurrentUsersEncodedEmail() {
 
         UserModel currentUser = getCurrentUserModel();

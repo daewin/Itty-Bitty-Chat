@@ -1,7 +1,8 @@
 package com.daewin.ibachat.chat;
 
+import android.content.Context;
 import android.databinding.ViewDataBinding;
-import android.support.v7.widget.RecyclerView;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,29 +11,29 @@ import com.daewin.ibachat.database.DatabaseUtil;
 import com.daewin.ibachat.databinding.ChatReceivedItemBinding;
 import com.daewin.ibachat.databinding.ChatSentItemBinding;
 import com.daewin.ibachat.model.MessageModel;
-import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
+import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.database.DatabaseReference;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 
 /**
- * Recycler View Adapter for displaying a chat list
+ * Sorted List Adapter for displaying a chat list
  */
 
-public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.MessageViewHolder> {
+public class ChatListAdapter extends SortedListAdapter<MessageModel> {
 
     private static final int VIEW_TYPE_MESSAGE_RECEIVED = 0;
     private static final int VIEW_TYPE_MESSAGE_SENT = 1;
 
-    private ArrayList<MessageModel> messages;
     private String currentUsersEmail;
     private DatabaseReference threadMessagesReference;
 
-    ChatListAdapter(ArrayList<MessageModel> messages, String threadID) {
-        this.messages = messages;
+    ChatListAdapter(@NonNull Context context, @NonNull Class<MessageModel> aClass,
+                    @NonNull Comparator<MessageModel> comparator, String threadID) {
+
+        super(context, aClass, comparator);
 
         DatabaseReference databaseReference
                 = DatabaseUtil.getDatabase().getReference();
@@ -40,14 +41,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
         threadMessagesReference
                 = databaseReference.child("thread_messages").child(threadID);
 
-        UserModel userModel = User.getCurrentUserModel();
-        if (userModel != null && userModel.exists()) {
-            this.currentUsersEmail = userModel.getEmail();
+        String currentUsersEmail = User.getCurrentUsersEmail();
+        if (currentUsersEmail != null) {
+            this.currentUsersEmail = currentUsersEmail;
         }
     }
 
+    @NonNull
     @Override
-    public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    protected ViewHolder<? extends MessageModel> onCreateViewHolder
+            (@NonNull LayoutInflater layoutInflater, @NonNull ViewGroup parent, int viewType) {
+
         if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
             ChatReceivedItemBinding binding = ChatReceivedItemBinding.inflate
                     (LayoutInflater.from(parent.getContext()), parent, false);
@@ -64,34 +68,22 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
 
     @Override
     public int getItemViewType(int position) {
-        MessageModel messageModel = messages.get(position);
+        MessageModel messageModel = getItem(position);
 
-        if (messageModel.getEmail().equals(currentUsersEmail)) {
+        if (messageModel.email.equals(currentUsersEmail)) {
             return VIEW_TYPE_MESSAGE_SENT;
         } else {
             return VIEW_TYPE_MESSAGE_RECEIVED;
         }
     }
 
-    @Override
-    public void onBindViewHolder(MessageViewHolder holder, int position) {
-        MessageModel messageModel = messages.get(position);
-        holder.bindTo(messageModel);
-    }
 
-    @Override
-    public void onBindViewHolder(MessageViewHolder holder, int position, List<Object> payloads) {
-        MessageModel messageModel = messages.get(position);
-        holder.bindTo(messageModel);
-    }
+    class MessageViewHolder extends ViewHolder<MessageModel> {
 
-    @Override
-    public int getItemCount() {
-        return messages.size();
-    }
+        private static final String MESSAGE_PENDING = "PENDING";
+        private static final String MESSAGE_SENT = "SENT";
+        private static final String MESSAGE_SEEN = "SEEN";
 
-
-    class MessageViewHolder extends RecyclerView.ViewHolder {
         private ViewDataBinding binding;
         private int viewType;
 
@@ -102,71 +94,105 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.Messag
             this.viewType = viewType;
         }
 
-        void bindTo(MessageModel messageModel) {
-            TimestampInterpreter interpreter
-                    = new TimestampInterpreter(messageModel.getTimestamp());
+        @Override
+        protected void performBind(@NonNull MessageModel messageModel) {
+            if (messageModel.isTimestampLive()) {
+                TimestampInterpreter interpreter
+                        = new TimestampInterpreter(messageModel.getLiveTimestamp());
 
-            String interpretation = interpreter.getTimestampInterpretation();
-            String time;
+                String interpretation = interpreter.getTimestampInterpretation();
+                String time;
 
-            switch (interpretation) {
-                case TimestampInterpreter.TODAY:
-                    time = "today at " + interpreter.getTime();
-                    break;
+                switch (interpretation) {
+                    case TimestampInterpreter.TODAY:
+                        time = "today at " + interpreter.getTime();
+                        break;
 
-                case TimestampInterpreter.YESTERDAY:
-                    time = "yesterday at " + interpreter.getTime();
-                    break;
+                    case TimestampInterpreter.YESTERDAY:
+                        time = "yesterday at " + interpreter.getTime();
+                        break;
 
-                default:
-                    time = interpreter.getFullDate();
-                    break;
+                    default:
+                        time = interpreter.getFullDate();
+                        break;
+                }
+
+                setIndividualItemBinding(messageModel, time);
             }
-
-            setIndividualItemBinding(messageModel, time);
         }
 
         void setIndividualItemBinding(MessageModel messageModel, String time) {
-
-            String message = messageModel.getMessage();
-
             if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
-
-                ChatReceivedItemBinding chatReceivedItemBinding = (ChatReceivedItemBinding) binding;
-
-                chatReceivedItemBinding.setMessage(message);
-                chatReceivedItemBinding.setTime(time);
-                chatReceivedItemBinding.executePendingBindings();
-
-                if(!chatReceivedItemBinding.messageTextView.isInLayout()){
-                    chatReceivedItemBinding.messageTextView.requestLayout();
-                }
-
-                if(!messageModel.isSeen()){
-                    String messageID = messageModel.getMessageID();
-                    if(messageID != null && !messageID.isEmpty()) {
-                        threadMessagesReference.child(messageID).child("seen").setValue(true);
-                    }
-                }
+                bindMessageReceived(messageModel, time);
 
             } else {
+                bindMessageSent(messageModel, time);
+            }
+        }
 
-                ChatSentItemBinding chatSentItemBinding = (ChatSentItemBinding) binding;
+        private void bindMessageReceived(MessageModel messageModel, String time) {
+            String message = messageModel.message;
 
-                chatSentItemBinding.setMessage(message);
-                chatSentItemBinding.setTime(time);
+            ChatReceivedItemBinding chatReceivedItemBinding = (ChatReceivedItemBinding) binding;
+            chatReceivedItemBinding.setMessage(message);
+            chatReceivedItemBinding.setTime(time);
+            chatReceivedItemBinding.executePendingBindings();
 
-                if(messageModel.isSeen()){
-                    chatSentItemBinding.seenImageView.setVisibility(View.VISIBLE);
+            if (!chatReceivedItemBinding.messageTextView.isInLayout()) {
+                chatReceivedItemBinding.messageTextView.requestLayout();
+            }
+
+            if (!messageModel.seen) {
+                String messageID = messageModel.messageID;
+                if (messageID != null && !messageID.isEmpty()) {
+                    threadMessagesReference.child(messageID).child("seen").setValue(true);
+                }
+            }
+        }
+
+        private void bindMessageSent(MessageModel messageModel, String time) {
+            String message = messageModel.message;
+
+            ChatSentItemBinding chatSentItemBinding = (ChatSentItemBinding) binding;
+            chatSentItemBinding.setMessage(message);
+            chatSentItemBinding.setTime(time);
+
+            if (messageModel.isLiveData()) {
+                if (messageModel.seen) {
+                    setMessageStatus(chatSentItemBinding, MESSAGE_SEEN);
                 } else {
-                    chatSentItemBinding.seenImageView.setVisibility(View.INVISIBLE);
+                    setMessageStatus(chatSentItemBinding, MESSAGE_SENT);
                 }
+            } else {
+                setMessageStatus(chatSentItemBinding, MESSAGE_PENDING);
+            }
 
-                chatSentItemBinding.executePendingBindings();
+            chatSentItemBinding.executePendingBindings();
 
-                if(!chatSentItemBinding.messageTextView.isInLayout()){
-                    chatSentItemBinding.messageTextView.requestLayout();
-                }
+            if (!chatSentItemBinding.messageTextView.isInLayout()) {
+                chatSentItemBinding.messageTextView.requestLayout();
+            }
+        }
+
+        private void setMessageStatus(ChatSentItemBinding binding, String status) {
+            switch (status) {
+                case MESSAGE_PENDING:
+                    binding.pendingImageView.setVisibility(View.VISIBLE);
+                    binding.sentImageView.setVisibility(View.INVISIBLE);
+                    binding.seenImageView.setVisibility(View.INVISIBLE);
+                    return;
+
+                case MESSAGE_SENT:
+                    binding.pendingImageView.setVisibility(View.INVISIBLE);
+                    binding.sentImageView.setVisibility(View.VISIBLE);
+                    binding.seenImageView.setVisibility(View.INVISIBLE);
+                    return;
+
+                case MESSAGE_SEEN:
+                    binding.pendingImageView.setVisibility(View.INVISIBLE);
+                    binding.sentImageView.setVisibility(View.INVISIBLE);
+                    binding.seenImageView.setVisibility(View.VISIBLE);
+                    return;
             }
         }
     }

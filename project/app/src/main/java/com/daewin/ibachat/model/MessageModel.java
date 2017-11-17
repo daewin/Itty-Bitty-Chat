@@ -1,8 +1,13 @@
 package com.daewin.ibachat.model;
 
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
+import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ServerValue;
 
 import java.util.Comparator;
 
@@ -10,16 +15,24 @@ import java.util.Comparator;
  * Message Model
  */
 
-public class MessageModel {
+public class MessageModel implements SortedListAdapter.ViewModel {
 
-    private @Exclude @Nullable String messageID;
-    private String email;
-    private String message;
-    private Long timestamp;
-    private boolean seen;
+    public @Exclude String messageID;
+    public @Exclude boolean liveData = false;
+    public String email;
+    public String message;
+    public Object timestamp;
+    public boolean seen;
 
     public MessageModel() {
         // Default constructor required for calls to DataSnapshot.getValue(ThreadModel.class)
+    }
+
+    public MessageModel(String email, String message) {
+        this.email = email;
+        this.message = message;
+        this.timestamp = ServerValue.TIMESTAMP;
+        this.seen = false;
     }
 
     public MessageModel(String email, String message, Long timestamp) {
@@ -29,73 +42,87 @@ public class MessageModel {
         this.seen = false;
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    @Exclude
+    public static final Comparator<MessageModel> timeComparator = new Comparator<MessageModel>() {
 
-        if (obj instanceof MessageModel) {
-            final MessageModel other = (MessageModel) obj;
+        @Override
+        public int compare(MessageModel a, MessageModel b) {
 
-            return other.getEmail().equals(this.getEmail())
-                    && other.getMessage().equals(this.getMessage())
-                    && other.getTimestamp().equals(this.getTimestamp());
+            Long aTimestamp = a.getLiveTimestamp();
+            Long bTimestamp = b.getLiveTimestamp();
+
+            if (aTimestamp != null && bTimestamp != null) {
+                return bTimestamp.compareTo(aTimestamp);
+
+            } else {
+                Log.w("Error", "Comparing incorrect timestamp types");
+                throw new ClassCastException();
+            }
+        }
+    };
+
+    @Exclude
+    public boolean isTimestampLive() {
+        try {
+            Long longTimestamp = Long.class.cast(timestamp);
+
+            if (longTimestamp != null) {
+                return true;
+            }
+
+        } catch (ClassCastException e) {
+            Log.w("Error", e.getMessage());
         }
 
         return false;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public boolean isSeen() {
-        return seen;
-    }
-
-    public void setSeen(boolean seen) {
-        this.seen = seen;
-    }
-
-    // Comparator for the Sorted List in the Adapter
-    @Exclude
-    public static final Comparator<MessageModel> timeComparator = new Comparator<MessageModel>() {
-        @Override
-        public int compare(MessageModel a, MessageModel b) {
-
-            Long timeA = a.getTimestamp();
-            Long timeB = b.getTimestamp();
-
-            return timeB.compareTo(timeA);
-        }
-    };
-
     @Nullable
-    @Exclude
-    public String getMessageID() {
-        return messageID;
+    public Long getLiveTimestamp() {
+        if (isTimestampLive()) {
+            return Long.class.cast(timestamp);
+        }
+
+        return null;
     }
 
     @Exclude
-    public void setMessageID(@Nullable String messageID) {
+    @Override
+    public <T> boolean isSameModelAs(@NonNull T t) {
+        if (t instanceof MessageModel) {
+            final MessageModel other = (MessageModel) t;
+
+            return other.messageID.equals(this.messageID);
+        }
+        return false;
+    }
+
+    @Exclude
+    @Override
+    public <T> boolean isContentTheSameAs(@NonNull T t) {
+        if (t instanceof MessageModel) {
+            final MessageModel other = (MessageModel) t;
+
+            return other.email.equals(this.email)
+                    && other.message.equals(this.message)
+                    && other.timestamp.equals(this.timestamp)
+                    && other.seen == this.seen;
+        }
+        return false;
+    }
+
+    @Exclude
+    public void setMessageID(@NonNull String messageID) {
         this.messageID = messageID;
+    }
+
+    @Exclude
+    public boolean isLiveData() {
+        return liveData;
+    }
+
+    @Exclude
+    public void setLiveData(boolean liveData) {
+        this.liveData = liveData;
     }
 }
