@@ -80,6 +80,7 @@ public class ChatListAdapter extends SortedListAdapter<MessageModel> {
 
     class MessageViewHolder extends ViewHolder<MessageModel> {
 
+        private static final String MESSAGE_PENDING = "PENDING";
         private static final String MESSAGE_SENT = "SENT";
         private static final String MESSAGE_SEEN = "SEEN";
 
@@ -156,10 +157,14 @@ public class ChatListAdapter extends SortedListAdapter<MessageModel> {
             chatSentItemBinding.setMessage(message);
             chatSentItemBinding.setTime(time);
 
-            if (messageModel.seen) {
-                setMessageStatus(chatSentItemBinding, MESSAGE_SEEN);
+            if (messageModel.isLiveData()) {
+                if (messageModel.seen) {
+                    setMessageStatus(chatSentItemBinding, MESSAGE_SEEN);
+                } else {
+                    setMessageStatus(chatSentItemBinding, MESSAGE_SENT);
+                }
             } else {
-                setMessageStatus(chatSentItemBinding, MESSAGE_SENT);
+                setMessageStatus(chatSentItemBinding, MESSAGE_PENDING);
             }
 
             chatSentItemBinding.executePendingBindings();
@@ -171,15 +176,23 @@ public class ChatListAdapter extends SortedListAdapter<MessageModel> {
 
         private void setMessageStatus(ChatSentItemBinding binding, String status) {
             switch (status) {
+                case MESSAGE_PENDING:
+                    binding.pendingImageView.setVisibility(View.VISIBLE);
+                    binding.sentImageView.setVisibility(View.INVISIBLE);
+                    binding.seenImageView.setVisibility(View.INVISIBLE);
+                    return;
+
                 case MESSAGE_SENT:
+                    binding.pendingImageView.setVisibility(View.INVISIBLE);
                     binding.sentImageView.setVisibility(View.VISIBLE);
                     binding.seenImageView.setVisibility(View.INVISIBLE);
-                    break;
+                    return;
 
                 case MESSAGE_SEEN:
+                    binding.pendingImageView.setVisibility(View.INVISIBLE);
                     binding.sentImageView.setVisibility(View.INVISIBLE);
                     binding.seenImageView.setVisibility(View.VISIBLE);
-                    break;
+                    return;
             }
         }
     }

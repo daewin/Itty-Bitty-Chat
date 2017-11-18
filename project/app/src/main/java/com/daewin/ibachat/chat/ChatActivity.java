@@ -245,7 +245,7 @@ public class ChatActivity extends AppCompatActivity {
     private void setTypingState(boolean isTyping) {
         // Check if the current typing state is the same as the calling function's typing state,
         // to reduce wasted data usage.
-        if (mIsTyping != isTyping) {
+        if(mIsTyping != isTyping){
             mTypingStateOfUserReference.setValue(isTyping);
             mIsTyping = isTyping;
         }
@@ -261,15 +261,27 @@ public class ChatActivity extends AppCompatActivity {
                 if (!message.isEmpty()) {
                     String email = mCurrentUser.getEmail();
 
-                    // Outgoing message using this constructor sets the timestamp as a placeholder
-                    // to be replaced with the server's timestamp once received; this is also
-                    // performed locally even if offline, with the estimated timestamp.
-                    MessageModel outgoingMessage = new MessageModel(email, message);
+                    DatabaseReference newMessageReference = mThreadMessagesReference.push();
 
-                    // We reduce the number of child-changed events by sending a single POJO, with
-                    // the downside of increased complexity of juggling between an Object and Long
-                    // type in the MessageModel
-                    mThreadMessagesReference.push().setValue(outgoingMessage);
+                    // Server timestamp gets an approximation, so just use the object
+
+                    // Add a local message to handle offline situations, so the user can see the
+                    // message is pending receipt from the server. We'll use the device's current
+                    // time since epoch, before being replaced by the server time once received.
+                    Long currentTime = System.currentTimeMillis();
+                    MessageModel localMessage = new MessageModel(email, message, currentTime);
+                    localMessage.setMessageID(newMessageReference.getKey());
+                    System.err.println("DAE: Adding local message");
+                    addMessageModel(localMessage);
+
+                    // Outgoing message using this particular constructor sets the timestamp as
+                    // a placeholder to be replaced with the server's timestamp once received. We
+                    // reduce the number of child-changed events by sending a single POJO object,
+                    // with the downside of increased complexity of juggling between an Object
+                    // and Long type in the MessageModel
+                    MessageModel outgoingMessage = new MessageModel(email, message);
+                    System.err.println("DAE: Sending outgoing message");
+                    newMessageReference.setValue(outgoingMessage);
 
                     // Push the message and timestamp to both the user's thread nodes
                     mFriendsThreadReference.child("lastMessage").setValue(message);
@@ -285,7 +297,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeStatusOfFriendListener() {
-        if (mStatusOfFriendListener == null) {
+        if(mStatusOfFriendListener == null){
             mStatusOfFriendListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -326,7 +338,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeTypingStateOfFriendListener() {
 
-        if (mTypingStateOfFriendListener == null) {
+        if(mTypingStateOfFriendListener == null){
             mTypingStateOfFriendListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -396,16 +408,24 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeThreadMessagesEventListener() {
-        if (mThreadMessagesListener == null) {
+        if(mThreadMessagesListener == null) {
             mThreadMessagesListener = new ChildEventListener() {
-
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                     MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
                     if (incomingMessage != null) {
+                        // As Firebase performs database actions locally (before sending it off to
+                        // the server) to give a "real-time" perception, we'll ignore accordingly.
+                        if(!incomingMessage.isTimestampLive()){
+                            System.err.println("DAE: Outgoing message deflected");
+                            return;
+                        }
+
                         // Set the message ID to the push key
-                        incomingMessage.messageID = dataSnapshot.getKey();
+                        incomingMessage.setMessageID(dataSnapshot.getKey());
+                        incomingMessage.setLiveData(true);
+                        System.err.println("DAE: Adding new live message");
                         addMessageModel(incomingMessage);
                     }
                 }
@@ -418,7 +438,10 @@ public class ChatActivity extends AppCompatActivity {
                     MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
                     if (incomingMessage != null) {
-                        incomingMessage.messageID = dataSnapshot.getKey();
+                        // Set the message ID to the push key
+                        incomingMessage.setMessageID(dataSnapshot.getKey());
+                        incomingMessage.setLiveData(true);
+                        System.err.println("DAE: Adding changed live message");
                         addMessageModel(incomingMessage);
                     }
                 }
@@ -449,7 +472,7 @@ public class ChatActivity extends AppCompatActivity {
         return true;
     }
 
-    private void addMessageModel(MessageModel model) {
+    private void addMessageModel(MessageModel model){
         mChatListAdapter.edit()
                 .add(model)
                 .commit();
