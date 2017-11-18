@@ -23,15 +23,13 @@ import com.daewin.ibachat.model.MessageModel;
 import com.daewin.ibachat.model.UserModel;
 import com.daewin.ibachat.timestamp.TimestampInterpreter;
 import com.daewin.ibachat.user.User;
+import com.github.wrdlbrnft.sortedlistadapter.SortedListAdapter;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Query;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Interaction via messages between two people. Only handles basic text for now.
@@ -62,7 +60,6 @@ public class ChatActivity extends AppCompatActivity {
     private TextView mStatusTextView;
     private RecyclerView mRecyclerView;
 
-    private ArrayList<MessageModel> messages;
     private ChatListAdapter mChatListAdapter;
     private UserModel mCurrentUser;
     private boolean mFriendsStatusSet;
@@ -192,10 +189,23 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeRecyclerView(String threadID) {
         mRecyclerView = binding.chatRecyclerView;
-        messages = new ArrayList<>();
 
         // Specify our adapter
-        mChatListAdapter = new ChatListAdapter(messages, threadID);
+        mChatListAdapter = new ChatListAdapter
+                (this, MessageModel.class, MessageModel.timeComparator, threadID);
+
+        // Add a callback to scroll to the bottom after adding a new message
+        mChatListAdapter.addCallback(new SortedListAdapter.Callback() {
+            @Override
+            public void onEditStarted() {
+                // Do nothing
+            }
+
+            @Override
+            public void onEditFinished() {
+                mRecyclerView.smoothScrollToPosition(0);
+            }
+        });
         mRecyclerView.setAdapter(mChatListAdapter);
         mRecyclerView.setHasFixedSize(true);
 
@@ -235,7 +245,7 @@ public class ChatActivity extends AppCompatActivity {
     private void setTypingState(boolean isTyping) {
         // Check if the current typing state is the same as the calling function's typing state,
         // to reduce wasted data usage.
-        if(mIsTyping != isTyping){
+        if (mIsTyping != isTyping) {
             mTypingStateOfUserReference.setValue(isTyping);
             mIsTyping = isTyping;
         }
@@ -250,40 +260,32 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (!message.isEmpty()) {
                     String email = mCurrentUser.getEmail();
-                    Long timestamp = System.currentTimeMillis();
 
-                    final MessageModel messageModel
-                            = new MessageModel(email, message, timestamp);
+                    // Outgoing message using this constructor sets the timestamp as a placeholder
+                    // to be replaced with the server's timestamp once received; this is also
+                    // performed locally even if offline, with the estimated timestamp.
+                    MessageModel outgoingMessage = new MessageModel(email, message);
 
-                    // Add it locally to handle offline situations. Firebase handles the pushes
-                    // locally too until it reconnects with the database, which it then syncs after
-                    messages.add(messageModel);
-
-                    // According to the docs, sorting a nearly-sorted list (this as it builds up)
-                    // requires only n comparisons, which is acceptable.
-                    Collections.sort(messages, MessageModel.timeComparator);
-                    mChatListAdapter.notifyItemInserted(messages.indexOf(messageModel));
-                    mRecyclerView.smoothScrollToPosition(0);
-
-                    // Do this after adding locally to avoid double messages
-                    mThreadMessagesReference.push().setValue(messageModel);
-
-                    binding.chatMessageArea.setText("");
+                    // We reduce the number of child-changed events by sending a single POJO, with
+                    // the downside of increased complexity of juggling between an Object and Long
+                    // type in the MessageModel
+                    mThreadMessagesReference.push().setValue(outgoingMessage);
 
                     // Push the message and timestamp to both the user's thread nodes
                     mFriendsThreadReference.child("lastMessage").setValue(message);
-                    mFriendsThreadReference.child("timestamp").setValue(timestamp);
+                    mFriendsThreadReference.child("timestamp").setValue(ServerValue.TIMESTAMP);
 
                     mUsersThreadReference.child("lastMessage").setValue(message);
-                    mUsersThreadReference.child("timestamp").setValue(timestamp);
+                    mUsersThreadReference.child("timestamp").setValue(ServerValue.TIMESTAMP);
+
+                    binding.chatMessageArea.setText("");
                 }
             }
         });
     }
 
     private void initializeStatusOfFriendListener() {
-
-        if(mStatusOfFriendListener == null){
+        if (mStatusOfFriendListener == null) {
             mStatusOfFriendListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -324,7 +326,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initializeTypingStateOfFriendListener() {
 
-        if(mTypingStateOfFriendListener == null){
+        if (mTypingStateOfFriendListener == null) {
             mTypingStateOfFriendListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -394,56 +396,30 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeThreadMessagesEventListener() {
-
-        if(mThreadMessagesListener == null) {
+        if (mThreadMessagesListener == null) {
             mThreadMessagesListener = new ChildEventListener() {
+
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
                     MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
                     if (incomingMessage != null) {
-                        // Since it's "live data", set the message ID to the push key
-                        incomingMessage.setMessageID(dataSnapshot.getKey());
-
-                        // To allow our local data to sync up properly, we check if the incoming
-                        // message is "equals" (based on the email, message and timestamp) to the
-                        // local message.
-                        if (messages.contains(incomingMessage)) {
-                            int storedMessageIndex = messages.indexOf(incomingMessage);
-                            MessageModel storedMessage = messages.get(storedMessageIndex);
-
-                            // We set the message ID, but we don't have to notify to avoid unnecessary
-                            // layout redraws. Any changes will be handled in onChildChanged
-                            storedMessage.setMessageID(incomingMessage.getMessageID());
-                            mChatListAdapter.notifyItemChanged(storedMessageIndex);
-                            return;
-                        }
-
-                        messages.add(incomingMessage);
-
-                        // According to the docs, sorting a nearly-sorted list (this as it builds up)
-                        // requires only n comparisons, which is acceptable.
-                        Collections.sort(messages, MessageModel.timeComparator);
-                        mChatListAdapter.notifyItemInserted(messages.indexOf(incomingMessage));
-
-                        mRecyclerView.smoothScrollToPosition(0);
+                        // Set the message ID to the push key
+                        incomingMessage.messageID = dataSnapshot.getKey();
+                        addMessageModel(incomingMessage);
                     }
                 }
 
                 @Override
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                    // Currently, only the "seen" status can be changed
+                    // There are currently two cases where a child can be changed: (1) A message
+                    // has been seen, and (2) ServerValue.TIMESTAMP has been replaced with the
+                    // server's current timestamp
                     MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
                     if (incomingMessage != null) {
-                        if (messages.contains(incomingMessage)) {
-                            int storedMessageIndex = messages.indexOf(incomingMessage);
-                            MessageModel storedMessage = messages.get(storedMessageIndex);
-
-                            storedMessage.setSeen(incomingMessage.isSeen());
-                            mChatListAdapter.notifyItemChanged(storedMessageIndex);
-                        }
+                        incomingMessage.messageID = dataSnapshot.getKey();
+                        addMessageModel(incomingMessage);
                     }
                 }
 
@@ -454,7 +430,7 @@ public class ChatActivity extends AppCompatActivity {
 
                 @Override
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                    // Ordering changes shouldn't happen
+                    // Priority/ordering changes shouldn't happen
                 }
 
                 @Override
@@ -471,5 +447,11 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    private void addMessageModel(MessageModel model) {
+        mChatListAdapter.edit()
+                .add(model)
+                .commit();
     }
 }
