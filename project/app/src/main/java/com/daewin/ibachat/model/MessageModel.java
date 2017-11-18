@@ -1,6 +1,5 @@
 package com.daewin.ibachat.model;
 
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -18,27 +17,19 @@ import java.util.Comparator;
 public class MessageModel implements SortedListAdapter.ViewModel {
 
     public @Exclude String messageID;
-    public @Exclude boolean liveData = false;
     public String email;
     public String message;
     public Object timestamp;
-    public boolean seen;
+    public Boolean seen;
 
     public MessageModel() {
-        // Default constructor required for calls to DataSnapshot.getValue(ThreadModel.class)
+        // Default constructor required for calls to DataSnapshot.getValue(MessageModel.class)
     }
 
     public MessageModel(String email, String message) {
         this.email = email;
         this.message = message;
         this.timestamp = ServerValue.TIMESTAMP;
-        this.seen = false;
-    }
-
-    public MessageModel(String email, String message, Long timestamp) {
-        this.email = email;
-        this.message = message;
-        this.timestamp = timestamp;
         this.seen = false;
     }
 
@@ -77,6 +68,7 @@ public class MessageModel implements SortedListAdapter.ViewModel {
         return false;
     }
 
+    @Exclude
     @Nullable
     public Long getLiveTimestamp() {
         if (isTimestampLive()) {
@@ -109,20 +101,5 @@ public class MessageModel implements SortedListAdapter.ViewModel {
                     && other.seen == this.seen;
         }
         return false;
-    }
-
-    @Exclude
-    public void setMessageID(@NonNull String messageID) {
-        this.messageID = messageID;
-    }
-
-    @Exclude
-    public boolean isLiveData() {
-        return liveData;
-    }
-
-    @Exclude
-    public void setLiveData(boolean liveData) {
-        this.liveData = liveData;
     }
 }
