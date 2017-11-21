@@ -24,7 +24,7 @@ import java.util.Comparator;
  */
 
 public class NotificationListAdapter extends SortedListAdapter<UserRequestModel> {
-    // TODO: Add timedate
+
     private DatabaseReference mUserDatabase;
     private String mCurrentUsersEncodedEmail;
     private String mCurrentUsersName;
@@ -71,7 +71,6 @@ public class NotificationListAdapter extends SortedListAdapter<UserRequestModel>
         @Override
         protected void performBind(@NonNull UserRequestModel userRequestModel) {
             binding.setUser(userRequestModel);
-            binding.executePendingBindings();
 
             final String friendsName = userRequestModel.getName();
             final String encodedFriendsEmail = User.getEncodedEmail(userRequestModel.getEmail());
@@ -89,6 +88,8 @@ public class NotificationListAdapter extends SortedListAdapter<UserRequestModel>
                     removeRequests(mCurrentUsersEncodedEmail, encodedFriendsEmail);
                 }
             });
+
+            binding.executePendingBindings();
         }
 
         private void acceptRequest(String friendsName, String encodedFriendsEmail){

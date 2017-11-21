@@ -19,7 +19,6 @@ public class UserRequestModel extends UserModel {
         this.timestamp = timestamp;
     }
 
-    @Exclude
     @Override
     public <T> boolean isSameModelAs(@NonNull T item) {
 
@@ -36,14 +35,12 @@ public class UserRequestModel extends UserModel {
         return false;
     }
 
-    @Exclude
     @Override
     public <T> boolean isContentTheSameAs(@NonNull T item) {
         return isSameModelAs(item);
     }
 
     // Comparator for the Sorted List in the Adapter
-    @Exclude
     public static final Comparator<UserRequestModel> timeComparator = new Comparator<UserRequestModel>() {
         @Override
         public int compare(UserRequestModel a, UserRequestModel b) {

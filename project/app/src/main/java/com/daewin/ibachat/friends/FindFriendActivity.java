@@ -38,6 +38,8 @@ import java.util.List;
 
 public class FindFriendActivity extends AppCompatActivity {
 
+    private static final int FRIEND_LIMIT_TO_FIRST = 10;
+
     private DatabaseReference mUserDatabase;
     private FirebaseUser mCurrentUser;
     private FindFriendListAdapter mFindFriendListAdapter;
@@ -79,10 +81,11 @@ public class FindFriendActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        // Clear adapter list to force cleanup any remaining listeners
+    protected void onDestroy() {
+        // Clear adapter list to force cleanup any remaining listeners. This is in onDestroy, so
+        // that a user can move back and forth without losing what they've typed so far
         clearAdapterList();
-        super.onStop();
+        super.onDestroy();
     }
 
     private void initializeRecyclerView() {
@@ -132,7 +135,8 @@ public class FindFriendActivity extends AppCompatActivity {
                 Query usernameQuery = mUserDatabase
                         .orderByKey()
                         .startAt(newText)
-                        .endAt(newText + Character.MAX_VALUE);
+                        .endAt(newText + Character.MAX_VALUE)
+                        .limitToFirst(FRIEND_LIMIT_TO_FIRST);
 
                 usernameQuery.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
