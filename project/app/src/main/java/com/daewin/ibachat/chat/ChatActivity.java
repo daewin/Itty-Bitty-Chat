@@ -252,7 +252,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeSendButtonBehaviour() {
-
         binding.chatSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -263,7 +262,7 @@ public class ChatActivity extends AppCompatActivity {
 
                     // Outgoing message using this constructor sets the timestamp as a placeholder
                     // to be replaced with the server's timestamp once received; this is also
-                    // performed locally even if offline, with the estimated timestamp.
+                    // performed locally even if offline, with an estimated timestamp.
                     MessageModel outgoingMessage = new MessageModel(email, message);
 
                     // We reduce the number of child-changed events by sending a single POJO, with
@@ -292,9 +291,9 @@ public class ChatActivity extends AppCompatActivity {
 
                     if (dataSnapshot.exists()) {
                         if (!mFriendsStatusSet) {
-                            // Since a user can have multiple devices, we only set it to online for
-                            // the first "online" status update. This is to prevent multiple listeners
-                            // set for the typing activity.
+                            // Since a user can have multiple devices, we only set it to online
+                            // for the first "online" status update. This is to prevent multiple
+                            // listeners set for the typing activity.
                             mStatusTextView.setText(R.string.user_online);
 
                             // Initialize listener for their typing activity
@@ -414,7 +413,7 @@ public class ChatActivity extends AppCompatActivity {
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                     // There are currently two cases where a child can be changed: (1) A message
                     // has been seen, and (2) ServerValue.TIMESTAMP has been replaced with the
-                    // server's current timestamp
+                    // server's current timestamp (replacing the estimated timestamp done locally)
                     MessageModel incomingMessage = dataSnapshot.getValue(MessageModel.class);
 
                     if (incomingMessage != null) {

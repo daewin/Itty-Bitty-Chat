@@ -64,12 +64,10 @@ public class ChatLandingActivity extends AppCompatActivity {
 
     @NonNull
     public static Intent createIntent(Context context, IdpResponse idpResponse) {
-
         Intent startIntent = new Intent();
         if (idpResponse != null) {
             startIntent.putExtra(EXTRA_IDP_RESPONSE, idpResponse);
         }
-
         return startIntent.setClass(context, ChatLandingActivity.class);
     }
 
