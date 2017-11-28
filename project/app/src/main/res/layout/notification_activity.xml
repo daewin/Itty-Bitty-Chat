@@ -35,7 +35,7 @@
             android:id="@+id/notificationToolbar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="?attr/colorAccent"
+            android:background="@color/colorPrimary"
             android:elevation="4dp"
             android:minHeight="?attr/actionBarSize"
             android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
