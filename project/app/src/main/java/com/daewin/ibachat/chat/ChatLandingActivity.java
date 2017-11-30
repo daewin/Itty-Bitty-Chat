@@ -101,13 +101,7 @@ public class ChatLandingActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (mNotificationsListener != null) {
-            mRequestsReceivedReference.removeEventListener(mNotificationsListener);
-        }
-
-        if (mUserThreadsListener != null) {
-            mUserThreadsReference.removeEventListener(mUserThreadsListener);
-        }
+        removeListeners();
     }
 
     private void initializeDatabaseReferences() {
@@ -280,6 +274,7 @@ public class ChatLandingActivity extends AppCompatActivity {
     private void logout() {
         UserPresence.getInstance().forceRemoveCurrentConnection();
         UserPresence.clearInstance();
+        removeListeners();
 
         final Intent logoutIntent
                 = new Intent(ChatLandingActivity.this, MainActivity.class);
@@ -294,6 +289,16 @@ public class ChatLandingActivity extends AppCompatActivity {
                         finishAffinity();
                     }
                 });
+    }
+
+    private void removeListeners(){
+        if (mNotificationsListener != null) {
+            mRequestsReceivedReference.removeEventListener(mNotificationsListener);
+        }
+
+        if (mUserThreadsListener != null) {
+            mUserThreadsReference.removeEventListener(mUserThreadsListener);
+        }
     }
 
     private void updateAdapterList(List<ThreadModel> threadModels) {

@@ -22,14 +22,14 @@ public class UserPresence {
 
     private static UserPresence ourInstance;
 
-    public static synchronized UserPresence getInstance() {
+    public static UserPresence getInstance() {
         if (ourInstance == null) {
             ourInstance = new UserPresence();
         }
         return ourInstance;
     }
 
-    public static synchronized void clearInstance() {
+    public static void clearInstance() {
         getInstance().removeUserPresence();
         ourInstance = null;
     }
