@@ -26,13 +26,13 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support:design:26.1.0'
-    implementation 'com.google.firebase:firebase-auth:11.4.2'
-    implementation 'com.google.firebase:firebase-database:11.4.2'
-    implementation 'com.github.wrdlbrnft:sorted-list-adapter:0.2.0.19'
+    implementation 'com.google.firebase:firebase-auth:11.6.2'
+    implementation 'com.google.firebase:firebase-database:11.6.2'
+    implementation 'com.github.wrdlbrnft:sorted-list-adapter:0.3.0.25'
     implementation 'android.arch.lifecycle:common-java8:1.0.0'
-    implementation 'com.firebaseui:firebase-ui-auth:3.1.0'
-    implementation 'com.facebook.android:facebook-login:4.28.0'
-    implementation('com.twitter.sdk.android:twitter:3.1.1@aar') {
+    implementation 'com.firebaseui:firebase-ui-auth:3.1.2'
+    implementation 'com.facebook.android:facebook-login:4.29.0'
+    implementation('com.twitter.sdk.android:twitter:3.2.0@aar') {
         transitive = true
     }
     testImplementation 'junit:junit:4.12'

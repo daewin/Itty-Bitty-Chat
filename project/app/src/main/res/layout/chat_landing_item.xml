@@ -35,7 +35,7 @@
             android:layout_marginStart="9dp"
             android:layout_marginTop="2dp"
             android:text="@{thread.lastMessage}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Notification"
+            android:textAppearance="@style/TextAppearance.Compat.Notification"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/nameText"
